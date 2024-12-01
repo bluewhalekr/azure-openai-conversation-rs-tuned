@@ -1,0 +1,22 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Azure OpenAI GPT RS-Tuned 설정",
+                "description": "Azure OpenAI GPT RS-Tuned 인증을 설정을 해주세요",
+                "data": {
+                    "api_key": "Azure API 키",
+                    "deployment_name": "배포 이름"
+                }
+            },
+            "error": {
+                "cannot_connect": "Azure OpenAI 연결 실패",
+                "invalid_auth": "인증 오류",
+                "unknown": "예기치 않은 오류 발생"
+            },
+            "abort": {
+                "already_configured": "Azure OpenAI가 이미 구성되어 있습니다"
+            }
+        }
+    }
+}
