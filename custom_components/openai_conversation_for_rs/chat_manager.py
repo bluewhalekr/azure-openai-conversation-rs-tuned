@@ -1,0 +1,78 @@
+"""Chat manager module."""
+
+from message_model import BaseMessage
+from prompt_manager import ClientCache
+
+
+class ChatCache(ClientCache):
+    """Chat cache."""
+
+    def __init__(self, client_id):
+        """Initialize the chat cache."""
+        super().__init__(client_id)
+        self.cache_key = "chat"
+
+    def get_messages(self):
+        """Get the messages."""
+        return self.get(self.cache_key, [])
+
+    def set_messages(self, value):
+        """Set the messages."""
+        self.set(self.cache_key, value)
+
+
+class ChatManager:
+    """Chat manager."""
+
+    def __init__(self, user_name):
+        """Initialize the chat manager."""
+        self.user_name = user_name
+        self.chat_cache = ChatCache(user_name)
+
+    @staticmethod
+    def get_next_message_id(messages):
+        """Get the next message id."""
+        if not messages:
+            return 0
+
+        return messages[-1].id + 1
+
+    def add_message(self, message: BaseMessage):
+        """Add a message to the chat."""
+        messages = self.chat_cache.get_messages()
+        message.id = self.get_next_message_id(messages)
+        messages.append(message)
+        self.chat_cache.set_messages(messages)
+
+    def update_messages(self, messages):
+        """Update the messages."""
+        self.chat_cache.set_messages(messages)
+
+    def get_messages(self):
+        """Get the messages."""
+        return self.chat_cache.get_messages()
+
+    def get_dict_messages(self, tool_args_to_str=False):
+        """Get the dict messages."""
+        messages = self.get_messages()
+        dict_messages = []
+
+        for message in messages:
+            if message.role == "assistant":
+                dict_message = message.to_dict(to_str_arguments=tool_args_to_str)
+            else:
+                dict_message = message.to_dict()
+
+            dict_messages.append(dict_message)
+
+        return dict_messages
+
+    def get_chat_input(self):
+        """Get the chat input."""
+        messages = self.chat_cache.get_messages()
+        dict_messages = [message.to_dict() for message in messages]
+
+        for message in dict_messages:
+            message.pop("id")
+
+        return dict_messages
