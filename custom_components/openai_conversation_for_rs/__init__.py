@@ -156,7 +156,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
 
             chat_input_messages = chat_manager.get_chat_input()
             _LOGGER.info("chat_input_messages: %s", chat_input_messages)
-            chat_response = gpt_ha_assistant.chat(chat_input_messages)
+            chat_response = await gpt_ha_assistant.chat(chat_input_messages)
             _LOGGER.info("chat_response: %s", chat_response)
 
             # Enhanced system prompt with HA context
