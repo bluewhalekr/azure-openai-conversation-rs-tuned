@@ -153,7 +153,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                 tool_prompts=[prompt_generator.get_tool()],
             )
 
-            chat_manager.add_message(UserMessage(content=prompt))
+            chat_manager.add_message(UserMessage(content=user_input.text))
             chat_manager.add_message(SystemMessage(**system_datetime_prompt))
             chat_manager.add_message(SystemMessage(**system_entities_prompt))
             chat_manager.add_message(SystemMessage(**system_services_prompt))
