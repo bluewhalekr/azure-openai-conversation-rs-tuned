@@ -79,7 +79,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
         """Refine various response formats."""
         try:
             if response_text is None:
-                response_text = "다시 한번 말씀해주시겠어요?"
+                response_text = "OpenAI가 제 말을 이해하지 못했습니다. 다른 표현으로 다시 시도해주세요"
             response_text = response_text.strip()  # 공백 제거
 
             # Case 0: ```json ... ``` 형태 처리
