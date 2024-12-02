@@ -109,12 +109,14 @@ Only use services and entities that exist in the current context."""
             messages = [
                 {
                     "role": "system",
-                    "content": system_prompt,
+                    "content": prompt_template,
                 },
                 {"role": "user", "content": user_input.text},
             ]
 
             response_text = await self._get_azure_response(messages)
+
+            # refine reponse_text
 
             # Try to parse response as JSON for device 요control
             try:
