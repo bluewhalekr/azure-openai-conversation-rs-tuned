@@ -120,7 +120,7 @@ class GptHaAssistant:
         """Chat with the GPT-based Home Assistant"""
         self.model_input_messages = self.add_instructions(chat_history)
 
-        response = self.openai_client.chat.completions.create(
+        response = await self.openai_client.chat.completions.create(
             model=self.deployment_name, messages=self.model_input_messages, tools=self.tool_prompts, n=n
         )
 
