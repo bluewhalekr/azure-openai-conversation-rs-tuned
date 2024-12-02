@@ -2,11 +2,8 @@
 
 from typing import List
 
-import openai
 import yaml
-from homeassistant.const import CONF_API_KEY
 
-from .const import API_VERSION, FIXED_ENDPOINT
 from .message_model import SystemMessage
 from .prompts.few_shot_prompts import tv_on_off_example
 
@@ -94,6 +91,7 @@ class GptHaAssistant:
         ha_automation_script: str,
         user_pattern_prompt: str,
         tool_prompts: List[dict],
+        client,
     ):
         self.init_prompt = init_prompt
         self.ha_automation_script = ha_automation_script
@@ -101,12 +99,7 @@ class GptHaAssistant:
         self.tool_prompts = tool_prompts
         self.deployment_name = deployment_name
         self.model_input_messages = []
-
-        self.openai_client = openai.AzureOpenAI(
-            azure_endpoint=FIXED_ENDPOINT,
-            api_key=CONF_API_KEY,
-            api_version=API_VERSION,
-        )
+        self.openai_client = client
 
     def add_instructions(self, chat_history: List[dict]):
         """Convert the chat history to JSON data"""

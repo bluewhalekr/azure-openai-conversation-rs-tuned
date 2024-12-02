@@ -146,6 +146,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                 ha_automation_script=self.prompt_manager.get_ha_automation_script(),
                 user_pattern_prompt=self.prompt_manager.get_user_pattern_prompt(),
                 tool_prompts=[prompt_generator.get_tool()],
+                client=self.client,
             )
 
             chat_manager.add_message(UserMessage(content=user_input.text))
