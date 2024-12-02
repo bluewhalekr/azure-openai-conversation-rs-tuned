@@ -14,9 +14,19 @@ from homeassistant.helpers import intent
 from homeassistant.helpers.typing import ConfigType
 from openai import AsyncAzureOpenAI
 
+from .chat_manager import ChatManager
 from .const import CONF_DEPLOYMENT_NAME, DOMAIN, FIXED_ENDPOINT
 from .ha_crawler import HaCrawler
+from .message_model import (
+    AssistantMessage,
+    BaseMessage,
+    SystemMessage,
+    ToolMessage,
+    UserMessage,
+)
 from .prompt import template as prompt_template
+from .prompt_generator import GptHaAssistant, PromptGenerator
+from .prompt_manager import PromptManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -56,6 +66,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
         self.history = []
         self.deployment_name = entry.data[CONF_DEPLOYMENT_NAME]
         self.ha_crawler = HaCrawler(hass)
+        self.prompt_manager = PromptManager(entry.entry_id)
 
     def _format_ha_context(self, ha_states: dict) -> str:
         """Format Home Assistant context for the prompt."""
@@ -123,10 +134,29 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                 ha_states = self.ha_crawler.get_ha_states()
                 ha_services = self.ha_crawler.get_services()
                 context = self._format_ha_context(ha_states)
+
             except Exception as err:
                 _LOGGER.error("Failed to get HA states: %s", err)
                 _LOGGER.error("Traceback: %s", traceback.format_exc())
                 context = "Unable to fetch current home state."
+
+            chat_manager = ChatManager(self.entry.entry_id)
+            prompt_generator = PromptGenerator(ha_states, ha_services)
+            system_datetime_prompt = prompt_generator.get_datetime_prompt()
+            system_entities_prompt = prompt_generator.get_entities_system_prompt()
+            system_services_prompt = prompt_generator.get_services_system_prompt()
+
+            gpt_ha_assistant = GptHaAssistant(
+                init_prompt=self.prompt_manager.get_init_prompt(),
+                ha_automation_script=self.prompt_manager.get_ha_automation_script(),
+                user_pattern_prompt=self.prompt_manager.get_user_pattern_prompt(),
+                tool_prompts=[prompt_generator.get_tool()],
+            )
+
+            chat_manager.add_message(UserMessage(content=prompt))
+            chat_manager.add_message(SystemMessage(**system_datetime_prompt))
+            chat_manager.add_message(SystemMessage(**system_entities_prompt))
+            chat_manager.add_message(SystemMessage(**system_services_prompt))
 
             # Enhanced system prompt with HA context
             system_prompt = f"""{prompt_template}
@@ -164,10 +194,11 @@ Only use services and entities that exist in the current context."""
                 },
                 {"role": "user", "content": user_input.text},
             ]
+            chat_input_messages = chat_manager.get_chat_input()
+            chat_response = gpt_ha_assistant.chat(chat_input_messages)
+            _LOGGER.info("chat_input_messages: %s", chat_response)
 
             response_text = await self._get_azure_response(messages)
-
-            # refine reponse_text,
             response_text = await self._refine_response(response_text)
 
             # Try to parse response as JSON for device 요control
