@@ -78,7 +78,6 @@ class HaCrawler:
             service_info = {"domain": domain, "services": {}}
 
             for service_name, service_data in domain_services.items():
-                _LOGGER.info(f"Found Service: {domain}.{service_name}")
                 service_info["services"][service_name] = {
                     "name": service_name,
                     "description": getattr(service_data, "description", "No description available"),
