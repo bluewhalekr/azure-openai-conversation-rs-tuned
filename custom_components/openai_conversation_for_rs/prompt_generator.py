@@ -87,14 +87,19 @@ class PromptGenerator:
 class GptHaAssistant:
     """GPT-based Home Assistant"""
 
-    model_deployment = "remote-solution-gpt-4o-mini"
-
-    def __init__(self, init_prompt: str, ha_automation_script: str, user_pattern_prompt: str, tool_prompts: List[dict]):
+    def __init__(
+        self,
+        deployment_name: str,
+        init_prompt: str,
+        ha_automation_script: str,
+        user_pattern_prompt: str,
+        tool_prompts: List[dict],
+    ):
         self.init_prompt = init_prompt
         self.ha_automation_script = ha_automation_script
         self.user_pattern_prompt = user_pattern_prompt
         self.tool_prompts = tool_prompts
-
+        self.deployment_name = deployment_name
         self.model_input_messages = []
 
         self.openai_client = openai.AzureOpenAI(
@@ -123,7 +128,7 @@ class GptHaAssistant:
         self.model_input_messages = self.add_instructions(chat_history)
 
         response = self.openai_client.chat.completions.create(
-            model=self.model_deployment, messages=self.model_input_messages, tools=self.tool_prompts, n=n
+            model=self.deployment_name, messages=self.model_input_messages, tools=self.tool_prompts, n=n
         )
 
         return response
