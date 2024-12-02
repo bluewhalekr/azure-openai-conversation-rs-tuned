@@ -79,7 +79,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
         """Refine various response formats."""
         try:
             if response_text is None:
-                response_text = "다시 한번 말씀해주시겠어요?"
+                response_text = "OpenAI가 제 말을 이해하지 못했습니다. 다른 표현으로 다시 시도해주세요"
             response_text = response_text.strip()  # 공백 제거
 
             # Case 0: ```json ... ``` 형태 처리
@@ -217,7 +217,15 @@ Only use services and entities that exist in the current context."""
             return conversation.ConversationResult(response=intent_response, conversation_id=self.entry.entry_id)
 
     async def _get_azure_response(self, messages: list) -> str:
-        """Get response from Azure OpenAI and handle content filtering errors."""
+        """Get response from Azure OpenAI and handle content filtering errors.
+
+        Args:
+            messages (list): List of conversation messages
+
+        Returns:
+            str: Response content or error message
+
+        """
         try:
             # Azure OpenAI API 호출
             response = await self.client.chat.completions.create(
@@ -226,40 +234,73 @@ Only use services and entities that exist in the current context."""
             return response.choices[0].message.content
 
         except openai.BadRequestError as err:
-            # 400 Bad Request 처리
-            try:
-                error_data = err.args[0]  # 오류 메시지에서 JSON 추출
-                error_dict = json.loads(error_data)
-                message = error_dict.get("error", {}).get("message", "Unknown error message.")
-                code = error_dict.get("error", {}).get("code", "unknown_error")
-                content_filter_result = (
-                    error_dict.get("error", {}).get("innererror", {}).get("content_filter_result", {})
-                )
-                feedback_message = "OpenAI가 제 말을 이해하지 못했습니다. 다른 표현으로 다시 시도해주세요."
-                # 차단된 카테고리 및 세부 정보 로깅
-                _LOGGER.error("Azure OpenAI Error: %s", message)
-                _LOGGER.error("Error Code: %s", code)
-                if content_filter_result:
-                    _LOGGER.error("Content Filter Result: %s", json.dumps(content_filter_result, indent=2))
+            return await self._handle_bad_request_error(err)
 
-                    # 사용자에게 피드백 생성
-                    feedback_message = (
-                        "요청이 Azure OpenAI의 콘텐츠 관리 정책에 의해 차단되었습니다. 다른 표현으로 요청해주세요."
-                    )
-                    for category, details in content_filter_result.items():
-                        if details.get("filtered", False):
-                            feedback_message += (
-                                f"\n- 차단된 카테고리: {category} (심각도: {details.get('severity', 'unknown')})"
-                            )
-                return feedback_message
+        except openai.RateLimitError:
+            _LOGGER.warning("Rate limit exceeded")
+            return "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
 
-            except Exception as parse_error:
-                _LOGGER.error("Failed to parse error response: %s", parse_error)
-                _LOGGER.error("Original error: %s", traceback.format_exc())
-                raise RuntimeError("Unknown error occurred while processing your request.") from err
+        except openai.APIError as err:
+            _LOGGER.error("Azure OpenAI API Error: %s", str(err))
+            return "서비스에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
 
         except Exception as err:
-            # 기타 예외 처리
-            _LOGGER.error("Unexpected error: %s", err)
+            _LOGGER.error("Unexpected error: %s", str(err))
             _LOGGER.error("Traceback: %s", traceback.format_exc())
-            raise RuntimeError("An unexpected error occurred.") from err
+            return "알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+
+    async def _handle_bad_request_error(self, err) -> str:
+        """Handle BadRequestError and process content filtering results.
+
+        Args:
+            err (openai.BadRequestError): The error object
+
+        Returns:
+            str: Formatted error message for the user
+
+        """
+        default_message = "OpenAI가 제 말을 이해하지 못했습니다. 다른 표현으로 다시 시도해주세요."
+
+        try:
+            # 오류 데이터 파싱
+            error_data = err.args[0]
+            if not isinstance(error_data, str):
+                _LOGGER.error("Unexpected error data type: %s", type(error_data))
+                return default_message
+
+            error_dict = json.loads(error_data)
+            error_info = error_dict.get("error", {})
+
+            # 기본 오류 정보 로깅
+            _LOGGER.error("Azure OpenAI Error: %s", error_info.get("message", "Unknown error"))
+            _LOGGER.error("Error Code: %s", error_info.get("code", "unknown_error"))
+
+            # 콘텐츠 필터 결과 처리
+            content_filter_result = error_info.get("innererror", {}).get("content_filter_result", {})
+            if not content_filter_result:
+                return default_message
+
+            # 콘텐츠 필터 결과 로깅
+            _LOGGER.error("Content Filter Result: %s", json.dumps(content_filter_result, indent=2))
+
+            # 사용자 피드백 메시지 생성
+            feedback_lines = [
+                "요청이 Azure OpenAI의 콘텐츠 관리 정책에 의해 차단되었습니다. 다른 표현으로 요청해주세요."
+            ]
+
+            # 차단된 카테고리 정보 추가
+            for category, details in content_filter_result.items():
+                if details.get("filtered", False):
+                    severity = details.get("severity", "unknown")
+                    feedback_lines.append(f"- 차단된 카테고리: {category} (심각도: {severity})")
+
+            return "\n".join(feedback_lines)
+
+        except json.JSONDecodeError as json_err:
+            _LOGGER.error("JSON parsing error: %s", str(json_err))
+            return default_message
+
+        except Exception as parse_err:
+            _LOGGER.error("Error parsing response: %s", str(parse_err))
+            _LOGGER.error("Traceback: %s", traceback.format_exc())
+            return default_message
