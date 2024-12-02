@@ -1,25 +1,7 @@
 """Chat manager module."""
 
-from typing import Optional
-
+from message_model import BaseMessage
 from prompt_manager import ClientCache
-from pydantic import BaseModel
-
-
-class BaseMessage(BaseModel):
-    """Base message model"""
-
-    id: Optional[int] = None
-    role: str
-    content: str
-
-    def to_dict(self) -> dict:
-        """Convert the message to a dictionary"""
-        return {
-            "id": self.id,
-            "role": self.role,
-            "content": self.content,
-        }
 
 
 class ChatCache(ClientCache):

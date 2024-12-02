@@ -1,49 +1,13 @@
 """Generate prompts for the Home Assistant API"""
 
-from typing import List, Optional
+from typing import List
 
 import openai
 import yaml
 from const import API_VERSION, FIXED_ENDPOINT
 from homeassistant.const import CONF_API_KEY
+from message_model import SystemMessage
 from prompts.few_shot_prompts import tv_on_off_example
-from pydantic import BaseModel
-
-
-class BaseMessage(BaseModel):
-    """Base message model"""
-
-    id: Optional[int] = None
-    role: str
-    content: str
-
-    def to_dict(self) -> dict:
-        """Convert the message to a dictionary"""
-        return {
-            "id": self.id,
-            "role": self.role,
-            "content": self.content,
-        }
-
-
-class SystemMessage(BaseMessage):
-    """System message model"""
-
-    role: str = "system"
-    content: str
-    name: Optional[str] = None
-
-    def to_dict(self) -> dict:
-        ret = {
-            "id": self.id,
-            "role": self.role,
-            "content": self.content,
-        }
-
-        if self.name:
-            ret["name"] = self.name
-
-        return ret
 
 
 class PromptGenerator:
