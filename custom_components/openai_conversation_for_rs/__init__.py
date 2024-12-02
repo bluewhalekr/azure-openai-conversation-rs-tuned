@@ -150,16 +150,29 @@ Only use services and entities that exist in the current context."""
             try:
                 response_data = json.loads(response_text)
                 # 복수 call_service가 올 수 있는 지 체크 필
-                if response_data.get("action") == "call_service":
-                    _LOGGER.info("call_service: %s", response_data["service"])
-                    await self.hass.services.async_call(
-                        domain=response_data["domain"],
-                        service=response_data["service"],
-                        target={"entity_id": response_data["entity_id"]},
-                        blocking=True,
-                    )
-                    response_text = response_data["response"]
-                    _LOGGER.info("response_text: %s", response_text)
+
+                if isinstance(response_data, dict):
+                    response_data = [response_data]  # 단일 객체를 리스트로 변환
+                elif isinstance(response_data, str):
+                    _LOGGER.info("Received plain text response: %s", response_text)
+                    response_data = []  # 문자열은 처리할 JSON 데이터가 없으므로 빈 리스트로 설정
+
+                # JSON 배열 또는 빈 리스트 처리
+                call_service_count = 0
+                for item in response_data:
+                    if item.get("action") == "call_service":
+                        _LOGGER.info("call_service: %s", item["service"])
+                        await self.hass.services.async_call(
+                            domain=item["domain"],
+                            service=item["service"],
+                            target={"entity_id": item["entity_id"]},
+                            blocking=True,
+                        )
+                        response_text = item.get("response", "요청하신 명령을 수행합니다.")
+                        call_service_count += 1
+                        _LOGGER.info("response_text: %s", response_text)
+                if call_service_count > 1:
+                    response_text = "요청하신 명령을 수행합니다."
             except json.JSONDecodeError:
                 # Not a JSON response, use as is
                 _LOGGER.error("json.JSONDecodeError: %s", response_text)
