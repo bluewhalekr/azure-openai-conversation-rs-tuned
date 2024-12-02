@@ -2,6 +2,7 @@
 
 import json
 import logging
+import traceback
 
 from homeassistant.components import conversation, intent
 from homeassistant.config_entries import ConfigEntry
@@ -82,6 +83,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                 context = self._format_ha_context(ha_states)
             except Exception as err:
                 _LOGGER.error("Failed to get HA states: %s", err)
+                _LOGGER.error("Traceback: %s", traceback.format_exc())
                 context = "Unable to fetch current home state."
 
             # Enhanced system prompt with HA context
@@ -135,6 +137,7 @@ Only use services and entities that exist in the current context."""
 
         except Exception as err:
             _LOGGER.error("Error processing with Azure OpenAI GPT-4-mini: %s", err)
+            _LOGGER.error("Traceback: %s", traceback.format_exc())
             intent_response = intent.IntentResponse(language=user_input.language)
             intent_response.async_set_error(
                 intent.IntentResponseErrorCode.UNKNOWN,
@@ -149,4 +152,5 @@ Only use services and entities that exist in the current context."""
             return response.choices[0].message.content
         except Exception as err:
             _LOGGER.error("Failed to get response from Azure OpenAI GPT-4-mini: %s", err)
+            _LOGGER.error("Traceback: %s", traceback.format_exc())
             raise
