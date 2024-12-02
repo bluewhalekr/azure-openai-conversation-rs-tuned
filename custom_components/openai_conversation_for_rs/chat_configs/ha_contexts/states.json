@@ -1,0 +1,881 @@
+{
+    "time": "13:14:02",
+    "date": "2024-10-04",
+    "weekday": "Friday",
+    "entities": [
+        {
+            "entity_id": "person.remote",
+            "name": "remote",
+            "state": "unknown",
+            "domain": "person",
+            "device": {
+                "id": "person.remote",
+                "name": null,
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "update.home_assistant_supervisor_update",
+            "name": "Home Assistant Supervisor Update",
+            "state": "off",
+            "domain": "update",
+            "device": {
+                "id": "update.home_assistant_supervisor_update",
+                "name": "Home Assistant Supervisor",
+                "name_by_user": null,
+                "model": "Home Assistant Supervisor",
+                "manufacturer": "Home Assistant",
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "update.home_assistant_core_update",
+            "name": "Home Assistant Core Update",
+            "state": "on",
+            "domain": "update",
+            "device": {
+                "id": "update.home_assistant_core_update",
+                "name": "Home Assistant Core",
+                "name_by_user": null,
+                "model": "Home Assistant Core",
+                "manufacturer": "Home Assistant",
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "update.advanced_ssh_web_terminal_update",
+            "name": "Advanced SSH & Web Terminal Update",
+            "state": "on",
+            "domain": "update",
+            "device": {
+                "id": "update.advanced_ssh_web_terminal_update",
+                "name": "Advanced SSH & Web Terminal",
+                "name_by_user": null,
+                "model": "Home Assistant Add-on",
+                "manufacturer": "Home Assistant Community Add-ons",
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "update.frp_client_update",
+            "name": "FRP Client Update",
+            "state": "off",
+            "domain": "update",
+            "device": {
+                "id": "update.frp_client_update",
+                "name": "FRP Client",
+                "name_by_user": null,
+                "model": "Home Assistant Add-on",
+                "manufacturer": "FRP Client",
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "update.samba_share_update",
+            "name": "Samba share Update",
+            "state": "off",
+            "domain": "update",
+            "device": {
+                "id": "update.samba_share_update",
+                "name": "Samba share",
+                "name_by_user": null,
+                "model": "Home Assistant Add-on",
+                "manufacturer": "Official add-ons",
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "update.file_editor_update",
+            "name": "File editor Update",
+            "state": "off",
+            "domain": "update",
+            "device": {
+                "id": "update.file_editor_update",
+                "name": "File editor",
+                "name_by_user": null,
+                "model": "Home Assistant Add-on",
+                "manufacturer": "Official add-ons",
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "update.mosquitto_broker_update",
+            "name": "Mosquitto broker Update",
+            "state": "off",
+            "domain": "update",
+            "device": {
+                "id": "update.mosquitto_broker_update",
+                "name": "Mosquitto broker",
+                "name_by_user": null,
+                "model": "Home Assistant Add-on",
+                "manufacturer": "Official add-ons",
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "update.ewelink_smart_home_update",
+            "name": "eWeLink Smart Home Update",
+            "state": "off",
+            "domain": "update",
+            "device": {
+                "id": "update.ewelink_smart_home_update",
+                "name": "eWeLink Smart Home",
+                "name_by_user": null,
+                "model": "Home Assistant Add-on",
+                "manufacturer": "eWeLink add-ons",
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "update.commandcrawlerassist_addon_update",
+            "name": "CommandCrawlerAssist Addon Update",
+            "state": "off",
+            "domain": "update",
+            "device": {
+                "id": "update.commandcrawlerassist_addon_update",
+                "name": "CommandCrawlerAssist Addon",
+                "name_by_user": null,
+                "model": "Home Assistant Add-on",
+                "manufacturer": "CommandCrawler Support Add-on Repository",
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "zone.home",
+            "name": "집",
+            "state": "0",
+            "domain": "zone",
+            "device": {
+                "id": "zone.home",
+                "name": null,
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "conversation.home_assistant",
+            "name": "Home Assistant",
+            "state": "2024-09-10T02:13:27.408227+00:00",
+            "domain": "conversation",
+            "device": {
+                "id": "conversation.home_assistant",
+                "name": null,
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "sun.sun",
+            "name": "Sun",
+            "state": "above_horizon",
+            "domain": "sun",
+            "device": {
+                "id": "sun.sun",
+                "name": null,
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "sensor.sun_next_dawn",
+            "name": "Sun 다음 새벽",
+            "state": "2024-10-04T21:04:51+00:00",
+            "domain": "sensor",
+            "device": {
+                "id": "sensor.sun_next_dawn",
+                "name": "Sun",
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "sensor.sun_next_dusk",
+            "name": "Sun 다음 황혼",
+            "state": "2024-10-04T09:37:16+00:00",
+            "domain": "sensor",
+            "device": {
+                "id": "sensor.sun_next_dusk",
+                "name": "Sun",
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "sensor.sun_next_midnight",
+            "name": "Sun 다음 자정",
+            "state": "2024-10-04T15:20:39+00:00",
+            "domain": "sensor",
+            "device": {
+                "id": "sensor.sun_next_midnight",
+                "name": "Sun",
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "sensor.sun_next_noon",
+            "name": "Sun 다음 정오",
+            "state": "2024-10-05T03:20:40+00:00",
+            "domain": "sensor",
+            "device": {
+                "id": "sensor.sun_next_noon",
+                "name": "Sun",
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "sensor.sun_next_rising",
+            "name": "Sun 다음 해돋이",
+            "state": "2024-10-04T21:31:25+00:00",
+            "domain": "sensor",
+            "device": {
+                "id": "sensor.sun_next_rising",
+                "name": "Sun",
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "sensor.sun_next_setting",
+            "name": "Sun 다음 해넘이",
+            "state": "2024-10-04T09:10:45+00:00",
+            "domain": "sensor",
+            "device": {
+                "id": "sensor.sun_next_setting",
+                "name": "Sun",
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "tts.google_translate_en_com",
+            "name": "Google Translate en com",
+            "state": "2024-09-27T06:14:38.822398+00:00",
+            "domain": "tts",
+            "device": {
+                "id": "tts.google_translate_en_com",
+                "name": null,
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "todo.shopping_list",
+            "name": "쇼핑 리스트",
+            "state": "0",
+            "domain": "todo",
+            "device": {
+                "id": "todo.shopping_list",
+                "name": null,
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "weather.forecast_jib",
+            "name": "Forecast 집",
+            "state": "sunny",
+            "domain": "weather",
+            "device": {
+                "id": "weather.forecast_jib",
+                "name": "Forecast",
+                "name_by_user": null,
+                "model": "Forecast",
+                "manufacturer": "Met.no",
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "binary_sensor.rpi_power_status",
+            "name": "RPi Power status",
+            "state": "off",
+            "domain": "binary_sensor",
+            "device": {
+                "id": "binary_sensor.rpi_power_status",
+                "name": null,
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "conversation.chatgpt",
+            "name": "ChatGPT",
+            "state": "2024-09-27T06:14:36.984247+00:00",
+            "domain": "conversation",
+            "device": {
+                "id": "conversation.chatgpt",
+                "name": "ChatGPT",
+                "name_by_user": null,
+                "model": "ChatGPT",
+                "manufacturer": "OpenAI",
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "media_player.vlc_telnet",
+            "name": "VLC-TELNET",
+            "state": "idle",
+            "domain": "media_player",
+            "device": {
+                "id": "media_player.vlc_telnet",
+                "name": "VLC-TELNET",
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": "VideoLAN",
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "update.hacs_update",
+            "name": "HACS update",
+            "state": "unavailable",
+            "domain": "update",
+            "device": {
+                "id": "update.hacs_update",
+                "name": "HACS",
+                "name_by_user": null,
+                "model": "",
+                "manufacturer": "hacs.xyz",
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "update.universal_remote_card_update",
+            "name": "Universal Remote Card update",
+            "state": "unavailable",
+            "domain": "update",
+            "device": {
+                "id": "update.universal_remote_card_update",
+                "name": "Universal Remote Card",
+                "name_by_user": null,
+                "model": "plugin",
+                "manufacturer": "Nerwyn",
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "update.smartthinq_lge_sensors_update",
+            "name": "SmartThinQ LGE Sensors update",
+            "state": "unavailable",
+            "domain": "update",
+            "device": {
+                "id": "update.smartthinq_lge_sensors_update",
+                "name": "SmartThinQ LGE Sensors",
+                "name_by_user": null,
+                "model": "integration",
+                "manufacturer": "ollo69",
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "switch.kitchen_light_switch_mock",
+            "name": "Kitchen Light Switch[Mock]",
+            "state": "on",
+            "domain": "switch",
+            "device": {
+                "id": "switch.kitchen_light_switch_mock",
+                "name": null,
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "light.mock_light",
+            "name": "Mock Light",
+            "state": "unavailable",
+            "domain": "light",
+            "device": {
+                "id": "light.mock_light",
+                "name": null,
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "light.bedroom_light",
+            "name": "bedroom Light",
+            "state": "off",
+            "domain": "light",
+            "device": {
+                "id": "light.bedroom_light",
+                "name": null,
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "light.living_room_light",
+            "name": "living_room Light",
+            "state": "on",
+            "domain": "light",
+            "device": {
+                "id": "light.living_room_light",
+                "name": null,
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "light.bathroom_light",
+            "name": "bathroom Light",
+            "state": "off",
+            "domain": "light",
+            "device": {
+                "id": "light.bathroom_light",
+                "name": null,
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "light.kitchen_light",
+            "name": "kitchen Light",
+            "state": "unavailable",
+            "domain": "light",
+            "device": {
+                "id": "light.kitchen_light",
+                "name": null,
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "light.entrance_light",
+            "name": "entrance Light",
+            "state": "unavailable",
+            "domain": "light",
+            "device": {
+                "id": "light.entrance_light",
+                "name": null,
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "update.extended_openai_conversation_update",
+            "name": "extended_openai_conversation update",
+            "state": "unavailable",
+            "domain": "update",
+            "device": {
+                "id": "update.extended_openai_conversation_update",
+                "name": "extended_openai_conversation",
+                "name_by_user": null,
+                "model": "integration",
+                "manufacturer": "jekalmin",
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "update.openai_tts_speech_service_update",
+            "name": "OpenAI TTS Speech Service update",
+            "state": "unavailable",
+            "domain": "update",
+            "device": {
+                "id": "update.openai_tts_speech_service_update",
+                "name": "OpenAI TTS Speech Service",
+                "name_by_user": null,
+                "model": "integration",
+                "manufacturer": "sfortis",
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        },
+        {
+            "entity_id": "switch.10021c017a",
+            "name": "office-light",
+            "state": "unavailable",
+            "domain": "switch",
+            "device": {
+                "id": "switch.10021c017a",
+                "name": null,
+                "name_by_user": null,
+                "model": null,
+                "manufacturer": null,
+                "connections": []
+            },
+            "area": {
+                "id": null,
+                "name": null
+            },
+            "floor": {
+                "id": null,
+                "name": null
+            },
+            "labels": []
+        }
+    ]
+}
