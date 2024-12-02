@@ -1,27 +1,26 @@
-""" Message models for the chat completion API """
+"""Message models for the chat completion API."""
 
 import json
 import time
-from typing import List, Optional, Any, Literal
+from typing import Any, List, Literal, Optional
 
 from openai.types.chat.chat_completion_message_tool_call import (
-    ChatCompletionMessageToolCall, Function)
+    ChatCompletionMessageToolCall,
+    Function,
+)
 from pydantic import BaseModel
 from requests.models import Response
 
 
 class BaseMessage(BaseModel):
-    """
-    Base message model
-    """
+    """Base message model"""
+
     id: Optional[int] = None
     role: str
     content: str
 
     def to_dict(self) -> dict:
-        """
-        Convert the message to a dictionary
-        """
+        """Convert the message to a dictionary"""
         return {
             "id": self.id,
             "role": self.role,
@@ -30,9 +29,8 @@ class BaseMessage(BaseModel):
 
 
 class UserMessage(BaseMessage):
-    """
-    User message model
-    """
+    """User message model"""
+
     role: str = "user"
     content: str
     name: Optional[str] = None
@@ -51,9 +49,8 @@ class UserMessage(BaseMessage):
 
 
 class SystemMessage(BaseMessage):
-    """
-    System message model
-    """
+    """System message model"""
+
     role: str = "system"
     content: str
     name: Optional[str] = None
@@ -72,32 +69,28 @@ class SystemMessage(BaseMessage):
 
 
 class ApiCall(BaseModel):
-    """
-    API call model
-    """
+    """API call model"""
+
     method: Literal["get", "post"]
     endpoint: str
     body: dict
 
 
 class ApiCallFunction(Function):
-    """
-    API call function model
-    """
+    """API call function model"""
+
     arguments: ApiCall
 
 
 class AssistantMessageToolCall(ChatCompletionMessageToolCall):
-    """
-    Assistant message tool call model
-    """
+    """Assistant message tool call model"""
+
     function: ApiCallFunction
 
 
 class AssistantMessage(BaseMessage):
-    """
-    Assistant message model
-    """
+    """Assistant message model"""
+
     role: str = "assistant"
     content: Optional[str] = None
     tool_calls: List[AssistantMessageToolCall] = []
@@ -107,8 +100,7 @@ class AssistantMessage(BaseMessage):
             for tool_call in data["tool_calls"]:
                 if isinstance(tool_call["function"]["arguments"], str):
                     api_call = json.loads(tool_call["function"]["arguments"])
-                    api_call['endpoint'] = api_call['endpoint'].replace(
-                        '{automation_id}', f'{time.time()}')
+                    api_call["endpoint"] = api_call["endpoint"].replace("{automation_id}", f"{time.time()}")
                     tool_call["function"]["arguments"] = api_call
 
         super().__init__(**data)
@@ -142,23 +134,22 @@ class AssistantMessage(BaseMessage):
 
 
 class ToolMessage(BaseMessage):
-    """
-    Tool message model
-    """
+    """Tool message model"""
+
     role: str = "tool"
     content: str
     tool_call_id: str
 
     @classmethod
     def from_api_response(cls, tool_call_id: str, response: Response):
-        """
-        Create a tool message from an API response
-        """
+        """Create a tool message from an API response"""
         return cls(
-            content=json.dumps({
-                "status_code": response.status_code,
-                "text": response.text,
-            }),
+            content=json.dumps(
+                {
+                    "status_code": response.status_code,
+                    "text": response.text,
+                }
+            ),
             tool_call_id=tool_call_id,
         )
 
