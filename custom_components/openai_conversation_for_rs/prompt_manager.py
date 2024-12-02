@@ -3,12 +3,14 @@
 import json
 import os
 
-file_path = os.path.dirname(__file__)
-INIT_PROMPT_PATH = os.path.join(os.path.dirname(file_path), "prompts", "init_prompt.md")
-USER_PATTERN_PROMPT_PATH = os.path.join(os.path.dirname(file_path), "prompts", "user_pattern_prompt.md")
-HA_AUTOMATION_SCRIPT_PATH = os.path.join(os.path.dirname(file_path), "prompts", "ha_automation_script.md")
+from .const import DOMAIN
 
-DATA_PATH = os.path.join(file_path, "chat_configs")
+file_path = os.path.dirname(__file__)
+INIT_PROMPT_PATH = os.path.join(os.path.dirname(file_path), DOMAIN, "prompts", "init_prompt.md")
+USER_PATTERN_PROMPT_PATH = os.path.join(os.path.dirname(file_path), DOMAIN, "prompts", "user_pattern_prompt.md")
+HA_AUTOMATION_SCRIPT_PATH = os.path.join(os.path.dirname(file_path), DOMAIN, "prompts", "ha_automation_script.md")
+
+DATA_PATH = os.path.join(file_path, DOMAIN, "chat_configs")
 HA_STATES_PATH = os.path.join(DATA_PATH, "ha_contexts", "states.json")
 HA_SERVICES_PATH = os.path.join(DATA_PATH, "ha_contexts", "services.json")
 
