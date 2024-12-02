@@ -131,7 +131,6 @@ Only use services and entities that exist in the current context."""
             except json.JSONDecodeError:
                 # Not a JSON response, use as is
                 _LOGGER.error("json.JSONDecodeError: %s", response_text)
-                pass
 
             intent_response = intent.IntentResponse(language=user_input.language)
             intent_response.async_set_speech(response_text)
