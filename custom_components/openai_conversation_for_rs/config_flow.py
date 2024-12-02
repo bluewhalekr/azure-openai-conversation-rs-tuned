@@ -12,7 +12,14 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 from openai import AsyncAzureOpenAI
 
-from .const import API_VERSION, CONF_DEPLOYMENT_NAME, CONF_ENDPOINT, CONVERSATION_AGENT_NAME, DOMAIN, FIXED_ENDPOINT
+from .const import (
+    API_VERSION,
+    CONF_DEPLOYMENT_NAME,
+    CONF_ENDPOINT,
+    CONVERSATION_AGENT_NAME,
+    DOMAIN,
+    FIXED_ENDPOINT,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
