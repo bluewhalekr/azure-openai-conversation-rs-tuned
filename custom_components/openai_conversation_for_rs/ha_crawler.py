@@ -94,12 +94,14 @@ class HaRequest:
 class HaCrawler:
     """Class to crawl Home Assistant data."""
 
+
     def __init__(self, hass: HomeAssistant):
         """Initialize the crawler with Home Assistant instance and config entry."""
         self.hass = hass
         # Home Assistant 인스턴스의 내부 URL 사용
         self.base_url = "http://supervisor/core"
         # Config Entry에서 토큰 가져오기
+
         self.tokens = os.environ.get("SUPERVISOR_TOKEN")
         self.ha_request = HaRequest(self.base_url, self.tokens)
 
