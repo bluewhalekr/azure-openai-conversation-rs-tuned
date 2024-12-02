@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 import traceback
 
 from homeassistant.components import conversation, intent
@@ -77,6 +78,17 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
         """Refine various response formats."""
         try:
             response_text = response_text.strip()  # 공백 제거
+
+            # Case 0: ```json ... ``` 형태 처리
+            json_blocks = re.findall(r"```json(.*?)```", response_text, flags=re.DOTALL)
+
+            if json_blocks:
+                _LOGGER.info("Extracting JSON from code blocks.")
+                # JSON 블록 추출 (```json과 ``` 제거)
+                response_text = "\n".join(json_blocks)
+                plain_text = re.sub(r"```json.*?```", "", response_text, flags=re.DOTALL).strip()
+                if plain_text:
+                    _LOGGER.info("plain text: %s", plain_text)
 
             # Case 1: JSON 배열 형식
             if response_text.startswith("[") and response_text.endswith("]"):
