@@ -17,7 +17,7 @@ from openai import AsyncAzureOpenAI
 from .chat_manager import ChatManager
 from .const import CONF_DEPLOYMENT_NAME, DOMAIN, FIXED_ENDPOINT
 from .ha_crawler import HaCrawler
-from .message_model import SystemMessage, UserMessage
+from .message_model import AssistantMessage, SystemMessage, UserMessage
 from .prompt import template as prompt_template
 from .prompt_generator import GptHaAssistant, PromptGenerator
 from .prompt_manager import PromptManager
@@ -158,6 +158,16 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
             _LOGGER.info("chat_input_messages: %s", chat_input_messages)
             chat_response = await gpt_ha_assistant.chat(chat_input_messages)
             _LOGGER.info("chat_response: %s", chat_response)
+
+            if chat_response:
+                response_message = chat_response.choices[0].message
+                assistant_message = AssistantMessage(**response_message.to_dict())
+                chat_manager.add_message(assistant_message)
+                if tool_calls := assistant_message.tool_calls:
+                    for tool_call in tool_calls:
+                        _LOGGER.info("tool_call: %s", tool_call)
+                        api_call = tool_call.function.arguments
+                        _LOGGER.info("api_call: %s", api_call)
 
             # Enhanced system prompt with HA context
             system_prompt = f"""{prompt_template}
