@@ -135,14 +135,23 @@ Current Home State:
 Available Services:
 {[f"{service['domain']}.{list(service.get('services', {}).keys())}" for service in ha_services]}
 
-When you need to control devices, respond with a JSON object in this format:
-{{
-    "action": "call_service",
-    "domain": "[domain]",
-    "service": "[service]",
-    "entity_id": "[entity_id]",
-    "response": "[human readable response]"
-}}
+When you need to control devices, respond with a JSON array of objects in this format:
+[
+    {{
+        "action": "call_service",
+        "domain": "[domain]",
+        "service": "[service]",
+        "entity_id": "[entity_id]",
+        "response": "[human readable response]"
+    }},
+    {{
+        "action": "call_service",
+        "domain": "[domain]",
+        "service": "[service]",
+        "entity_id": "[entity_id]",
+        "response": "[human readable response]"
+    }}
+]
 
 Only use services and entities that exist in the current context."""
 
