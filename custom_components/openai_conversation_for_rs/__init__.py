@@ -52,8 +52,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
         self.client = client
         self.history = []
         self.deployment_name = entry.data[CONF_DEPLOYMENT_NAME]
-        # token과 base url 확보를 위한 ConfigEntry를 HaCrawler에 전달
-        self.ha_crawler = HaCrawler(hass, entry)
+        self.ha_crawler = HaCrawler(hass)
 
     def _format_ha_context(self, ha_states: dict) -> str:
         """Format Home Assistant context for the prompt."""

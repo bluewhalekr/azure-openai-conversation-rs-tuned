@@ -2,12 +2,12 @@
 
 import json
 import logging
+import os
 import re
 import urllib.parse
 from typing import List, Union
 
 import requests
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
@@ -94,13 +94,13 @@ class HaRequest:
 class HaCrawler:
     """Class to crawl Home Assistant data."""
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry):
+    def __init__(self, hass: HomeAssistant):
         """Initialize the crawler with Home Assistant instance and config entry."""
         self.hass = hass
         # Home Assistant 인스턴스의 내부 URL 사용
         self.base_url = "http://supervisor/core"
         # Config Entry에서 토큰 가져오기
-        self.tokens = entry.data[CONF_API_KEY]
+        self.tokens = os.environ.get("SUPERVISOR_TOKEN")
         self.ha_request = HaRequest(self.base_url, self.tokens)
 
     def is_connected(self) -> bool:
