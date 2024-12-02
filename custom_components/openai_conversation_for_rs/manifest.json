@@ -14,9 +14,9 @@
     "@amaramusic"
   ],
   "requirements": [
+    "pydantic",
     "openai>=1.12.0,<2.0.0",
-    "requests",
-    "pydantic"
+    "requests"
   ],
   "config_flow": true,
   "iot_class": "cloud_polling",
