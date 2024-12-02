@@ -17,6 +17,7 @@ from openai import AsyncAzureOpenAI
 from .chat_manager import ChatManager
 from .const import CONF_DEPLOYMENT_NAME, DOMAIN, FIXED_ENDPOINT
 from .ha_crawler import HaCrawler
+from .message_model import SystemMessage, UserMessage
 from .prompt import template as prompt_template
 from .prompt_generator import GptHaAssistant, PromptGenerator
 from .prompt_manager import PromptManager
