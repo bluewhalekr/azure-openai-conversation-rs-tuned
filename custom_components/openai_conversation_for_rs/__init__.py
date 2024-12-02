@@ -63,7 +63,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
 
         context += "Available Devices:\n"
         for entity in ha_states.get("entities", []):
-            area_name = entity.get("area", {}).get("name", "Unknown Area")
+            area_name = (entity.get("area") or {}).get("name", "Unknown Area")
             context += f"- {entity['name']} ({entity['entity_id']}) in {area_name}\n" f"  State: {entity['state']}\n"
 
         return context
