@@ -4,9 +4,9 @@ from typing import List
 
 import openai
 import yaml
-from const import API_VERSION, FIXED_ENDPOINT
 from homeassistant.const import CONF_API_KEY
 
+from .const import API_VERSION, FIXED_ENDPOINT
 from .message_model import SystemMessage
 from .prompts.few_shot_prompts import tv_on_off_example
 
