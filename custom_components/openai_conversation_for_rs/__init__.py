@@ -5,6 +5,7 @@ import logging
 import re
 import traceback
 
+import openai
 from homeassistant.components import conversation, intent
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY
@@ -205,11 +206,47 @@ Only use services and entities that exist in the current context."""
             return conversation.ConversationResult(response=intent_response, conversation_id=self.entry.entry_id)
 
     async def _get_azure_response(self, messages: list) -> str:
-        """Get response from Azure OpenAI."""
+        """Get response from Azure OpenAI and handle content filtering errors."""
         try:
+            # Azure OpenAI API 호출
             response = await self.client.chat.completions.create(model=self.deployment_name, messages=messages)
             return response.choices[0].message.content
+
+        except openai.BadRequestError as err:
+            # 400 Bad Request 처리
+            try:
+                error_data = err.args[0]  # 오류 메시지에서 JSON 추출
+                error_dict = json.loads(error_data)
+                message = error_dict.get("error", {}).get("message", "Unknown error message.")
+                code = error_dict.get("error", {}).get("code", "unknown_error")
+                content_filter_result = (
+                    error_dict.get("error", {}).get("innererror", {}).get("content_filter_result", {})
+                )
+                feedback_message = "OpenAI가 제 말을 이해하지 못했습니다. 다른 표현으로 다시 시도해주세요."
+                # 차단된 카테고리 및 세부 정보 로깅
+                _LOGGER.error("Azure OpenAI Error: %s", message)
+                _LOGGER.error("Error Code: %s", code)
+                if content_filter_result:
+                    _LOGGER.error("Content Filter Result: %s", json.dumps(content_filter_result, indent=2))
+
+                    # 사용자에게 피드백 생성
+                    feedback_message = (
+                        "요청이 Azure OpenAI의 콘텐츠 관리 정책에 의해 차단되었습니다. 다른 표현으로 요청해주세요."
+                    )
+                    for category, details in content_filter_result.items():
+                        if details.get("filtered", False):
+                            feedback_message += (
+                                f"\n- 차단된 카테고리: {category} (심각도: {details.get('severity', 'unknown')})"
+                            )
+                return feedback_message
+
+            except Exception as parse_error:
+                _LOGGER.error("Failed to parse error response: %s", parse_error)
+                _LOGGER.error("Original error: %s", traceback.format_exc())
+                raise RuntimeError("Unknown error occurred while processing your request.") from err
+
         except Exception as err:
-            _LOGGER.error("Failed to get response from Azure OpenAI GPT-4-mini: %s", err)
+            # 기타 예외 처리
+            _LOGGER.error("Unexpected error: %s", err)
             _LOGGER.error("Traceback: %s", traceback.format_exc())
-            raise
+            raise RuntimeError("An unexpected error occurred.") from err
