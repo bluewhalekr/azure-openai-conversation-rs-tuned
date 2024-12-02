@@ -220,7 +220,9 @@ Only use services and entities that exist in the current context."""
         """Get response from Azure OpenAI and handle content filtering errors."""
         try:
             # Azure OpenAI API 호출
-            response = await self.client.chat.completions.create(model=self.deployment_name, messages=messages)
+            response = await self.client.chat.completions.create(
+                model=self.deployment_name, messages=messages, temperature=0.0
+            )
             return response.choices[0].message.content
 
         except openai.BadRequestError as err:
