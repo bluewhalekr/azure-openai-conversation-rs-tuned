@@ -1,7 +1,7 @@
 """Chat manager module."""
 
-from message_model import BaseMessage
-from prompt_manager import ClientCache
+from .message_model import BaseMessage
+from .prompt_manager import ClientCache
 
 
 class ChatCache(ClientCache):
