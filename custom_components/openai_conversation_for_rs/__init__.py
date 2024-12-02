@@ -116,9 +116,10 @@ Only use services and entities that exist in the current context."""
 
             response_text = await self._get_azure_response(messages)
 
-            # Try to parse response as JSON for device control
+            # Try to parse response as JSON for device 요control
             try:
                 response_data = json.loads(response_text)
+                # 복수 call_service가 올 수 있는 지 체크 필
                 if response_data.get("action") == "call_service":
                     await self.hass.services.async_call(
                         domain=response_data["domain"],
@@ -129,6 +130,7 @@ Only use services and entities that exist in the current context."""
                     response_text = response_data["response"]
             except json.JSONDecodeError:
                 # Not a JSON response, use as is
+                _LOGGER.error("json.JSONDecodeError: %s", response_text)
                 pass
 
             intent_response = intent.IntentResponse(language=user_input.language)
