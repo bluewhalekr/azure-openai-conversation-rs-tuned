@@ -153,10 +153,15 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                 tool_prompts=[prompt_generator.get_tool()],
             )
 
-            chat_manager.add_message(UserMessage(content=prompt))
+            chat_manager.add_message(UserMessage(content=user_input.text))
             chat_manager.add_message(SystemMessage(**system_datetime_prompt))
             chat_manager.add_message(SystemMessage(**system_entities_prompt))
             chat_manager.add_message(SystemMessage(**system_services_prompt))
+
+            chat_input_messages = chat_manager.get_chat_input()
+            _LOGGER.info("chat_input_messages: %s", chat_input_messages)
+            chat_response = gpt_ha_assistant.chat(chat_input_messages)
+            _LOGGER.info("chat_response: %s", chat_response)
 
             # Enhanced system prompt with HA context
             system_prompt = f"""{prompt_template}
@@ -194,9 +199,6 @@ Only use services and entities that exist in the current context."""
                 },
                 {"role": "user", "content": user_input.text},
             ]
-            chat_input_messages = chat_manager.get_chat_input()
-            chat_response = gpt_ha_assistant.chat(chat_input_messages)
-            _LOGGER.info("chat_input_messages: %s", chat_response)
 
             response_text = await self._get_azure_response(messages)
             response_text = await self._refine_response(response_text)
