@@ -116,7 +116,7 @@ class GptHaAssistant:
 
         return model_input_messages
 
-    def chat(self, chat_history: List[dict], n=1):
+    async def chat(self, chat_history: List[dict], n=1):
         """Chat with the GPT-based Home Assistant"""
         self.model_input_messages = self.add_instructions(chat_history)
 
