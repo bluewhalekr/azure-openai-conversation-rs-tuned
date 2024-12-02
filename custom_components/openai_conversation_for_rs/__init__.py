@@ -137,6 +137,7 @@ Only use services and entities that exist in the current context."""
 
         except Exception as err:
             _LOGGER.error("Error processing with Azure OpenAI GPT-4-mini: %s", err)
+            _LOGGER.error("user_input.text: %s", user_input.text)
             _LOGGER.error("Traceback: %s", traceback.format_exc())
             intent_response = intent.IntentResponse(language=user_input.language)
             intent_response.async_set_error(
