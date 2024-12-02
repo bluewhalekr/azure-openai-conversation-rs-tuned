@@ -1,9 +1,12 @@
+import logging
 from datetime import datetime
 from typing import List
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import device_registry as dr
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HaCrawler:
@@ -75,10 +78,11 @@ class HaCrawler:
             service_info = {"domain": domain, "services": {}}
 
             for service_name, service_data in domain_services.items():
+                _LOGGER.info(f"Found Service: {domain}.{service_name}")
                 service_info["services"][service_name] = {
                     "name": service_name,
-                    "description": service_data.description,
-                    "fields": service_data.fields,
+                    "description": getattr(service_data, "description", "No description available"),
+                    "fields": getattr(service_data, "fields", {}),
                 }
 
             services.append(service_info)
