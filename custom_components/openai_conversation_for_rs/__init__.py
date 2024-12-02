@@ -136,7 +136,7 @@ Only use services and entities that exist in the current context."""
             messages = [
                 {
                     "role": "system",
-                    "content": prompt_template,
+                    "content": system_prompt,
                 },
                 {"role": "user", "content": user_input.text},
             ]
