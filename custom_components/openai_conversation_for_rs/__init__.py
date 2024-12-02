@@ -141,6 +141,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
             system_services_prompt = prompt_generator.get_services_system_prompt()
 
             gpt_ha_assistant = GptHaAssistant(
+                deployment_name=self.deployment_name,
                 init_prompt=self.prompt_manager.get_init_prompt(),
                 ha_automation_script=self.prompt_manager.get_ha_automation_script(),
                 user_pattern_prompt=self.prompt_manager.get_user_pattern_prompt(),
