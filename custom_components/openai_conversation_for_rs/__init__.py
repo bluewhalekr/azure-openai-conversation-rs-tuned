@@ -73,6 +73,33 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
         """Return a list of supported languages."""
         return ["en", "ko"]
 
+    async def _refine_response(self, response_text):
+        """Refine various response formats."""
+        try:
+            response_text = response_text.strip()  # 공백 제거
+
+            # Case 1: JSON 배열 형식
+            if response_text.startswith("[") and response_text.endswith("]"):
+                _LOGGER.info("Processing JSON array format.")
+                return response_text
+
+            # Case 2: 쉼표로 나열된 JSON 객체
+            if response_text.startswith("{") and response_text.endswith("}"):
+                if "," in response_text:  # 쉼표가 있는 경우, JSON 배열로 변환
+                    _LOGGER.info("Processing multiple JSON objects.")
+                    return f"[{response_text}]"
+                _LOGGER.info("Processing single JSON object.")  # 단일 객체
+                return response_text
+
+            # Case 3: 일반 문장
+            _LOGGER.info("Processing plain text: %s", response_text)
+            return response_text
+
+        except Exception as e:
+            _LOGGER.error("Error refining response: %s", e)
+            _LOGGER.error("Traceback: %s", traceback.format_exc())
+            return None
+
     async def async_process(self, user_input: conversation.ConversationInput) -> conversation.ConversationResult:
         """Process a sentence."""
         try:
@@ -116,7 +143,8 @@ Only use services and entities that exist in the current context."""
 
             response_text = await self._get_azure_response(messages)
 
-            # refine reponse_text
+            # refine reponse_text,
+            response_text = await self._refine_response(response_text)
 
             # Try to parse response as JSON for device 요control
             try:
