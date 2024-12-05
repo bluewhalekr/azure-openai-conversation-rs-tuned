@@ -2,7 +2,6 @@
 
 import json
 import logging
-import re
 import traceback
 
 import openai
@@ -18,7 +17,6 @@ from .chat_manager import ChatManager
 from .const import CONF_DEPLOYMENT_NAME, DOMAIN, FIXED_ENDPOINT
 from .ha_crawler import HaCrawler
 from .message_model import AssistantMessage, SystemMessage, UserMessage
-from .prompt import template as prompt_template
 from .prompt_generator import GptHaAssistant, PromptGenerator
 from .prompt_manager import PromptManager
 
@@ -61,6 +59,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
         self.deployment_name = entry.data[CONF_DEPLOYMENT_NAME]
         self.ha_crawler = HaCrawler(hass)
         self.prompt_manager = PromptManager(entry.entry_id)
+        self.hass_api_handler = HassApiHandler(hass)
 
     def _format_ha_context(self, ha_states: dict) -> str:
         """Format Home Assistant context for the prompt."""
@@ -80,83 +79,9 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
         """Return a list of supported languages."""
         return ["en", "ko"]
 
-    async def _refine_response(self, response_text):
-        """Refine various response formats."""
-        try:
-            if response_text is None:
-                response_text = "OpenAI가 제 말을 이해하지 못했습니다. 다른 표현으로 다시 시도해주세요"
-            response_text = response_text.strip()  # 공백 제거
-
-            # Case 0: ```json ... ``` 형태 처리
-            json_blocks = re.findall(r"```json(.*?)```", response_text, flags=re.DOTALL)
-
-            if json_blocks:
-                _LOGGER.info("Extracting JSON from code blocks.")
-                # JSON 블록 추출 (```json과 ``` 제거)
-                response_text = "\n".join(json_blocks)
-                plain_text = re.sub(r"```json.*?```", "", response_text, flags=re.DOTALL).strip()
-                if plain_text:
-                    _LOGGER.info("plain text: %s", plain_text)
-
-            # Case 1: JSON 배열 형식
-            if response_text.startswith("[") and response_text.endswith("]"):
-                _LOGGER.info("Processing JSON array format.")
-                return response_text
-
-            # Case 2: 쉼표로 나열된 JSON 객체
-            if response_text.startswith("{") and response_text.endswith("}"):
-                if "," in response_text:  # 쉼표가 있는 경우, JSON 배열로 변환
-                    _LOGGER.info("Processing multiple JSON objects.")
-                    return f"[{response_text}]"
-                _LOGGER.info("Processing single JSON object.")  # 단일 객체
-                return response_text
-
-            # Case 3: 일반 문장
-            _LOGGER.info("Processing plain text: %s", response_text)
-            return response_text
-
-        except Exception as e:
-            _LOGGER.error("Error refining response: %s", e)
-            _LOGGER.error("Traceback: %s", traceback.format_exc())
-            return None
-
-    def convert_api_call_to_service_call(api_call):
-        """Convert API call format to hass.services.async_call parameters with target.
-
-        Args:
-            api_call: API call object with endpoint and body
-
-        Returns:
-            dict: Parameters for hass.services.async_call
-
-        """
-        parts = api_call.endpoint.split("/")
-        if len(parts) >= 5:
-            domain = parts[3]
-            service = parts[4]
-
-            # service_data에서 entity_id를 제외한 나머지 데이터만 포함
-            service_data = dict(api_call.body)
-            entity_id = service_data.pop("entity_id", None)
-
-            result = {
-                "domain": domain,
-                "service": service,
-            }
-
-            # entity_id가 있는 경우 target에 포함
-            if entity_id:
-                result["target"] = {"entity_id": entity_id}
-
-            # 추가 서비스 데이터가 있는 경우에만 포함
-            if service_data:
-                result["service_data"] = service_data
-
-            return result
-        return None
-
     async def async_process(self, user_input: conversation.ConversationInput) -> conversation.ConversationResult:
         """Process a sentence."""
+        response_text = ""
         try:
             # Get current HA states
             try:
@@ -195,85 +120,22 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
             _LOGGER.info("chat_response: %s", chat_response)
 
             if chat_response:
+                call_service_count = 0
                 response_message = chat_response.choices[0].message
                 assistant_message = AssistantMessage(**response_message.to_dict())
+                if assistant_message.content:
+                    response_text = assistant_message.content
                 chat_manager.add_message(assistant_message)
                 if tool_calls := assistant_message.tool_calls:
                     for tool_call in tool_calls:
+                        call_service_count += 1
                         _LOGGER.info("tool_call: %s", tool_call)
                         api_call = tool_call.function.arguments
                         _LOGGER.info("api_call: %s", api_call)
+                        await self.hass_api_handler.process_api_call(tool_call.function)
 
-            # Enhanced system prompt with HA context
-            system_prompt = f"""{prompt_template}
-
-Current Home State:
-{context}
-
-Available Services:
-{[f"{service['domain']}.{list(service.get('services', {}).keys())}" for service in ha_services]}
-
-When you need to control devices, respond with a JSON array of objects in this format:
-[
-    {{
-        "action": "call_service",
-        "domain": "[domain]",
-        "service": "[service]",
-        "entity_id": "[entity_id]",
-        "response": "[human readable response]"
-    }},
-    {{
-        "action": "call_service",
-        "domain": "[domain]",
-        "service": "[service]",
-        "entity_id": "[entity_id]",
-        "response": "[human readable response]"
-    }}
-]
-
-Only use services and entities that exist in the current context."""
-
-            messages = [
-                {
-                    "role": "system",
-                    "content": system_prompt,
-                },
-                {"role": "user", "content": user_input.text},
-            ]
-
-            response_text = await self._get_azure_response(messages)
-            response_text = await self._refine_response(response_text)
-
-            # Try to parse response as JSON for device control
-            try:
-                response_data = json.loads(response_text)
-                # 복수 call_service가 올 수 있는 지 체크 필요
-
-                if isinstance(response_data, dict):
-                    response_data = [response_data]  # 단일 객체를 리스트로 변환
-                elif isinstance(response_data, str):
-                    _LOGGER.info("Received plain text response: %s", response_text)
-                    response_data = []  # 문자열은 처리할 JSON 데이터가 없으므로 빈 리스트로 설정
-
-                # JSON 배열 또는 빈 리스트 처리
-                call_service_count = 0
-                for item in response_data:
-                    if item.get("action") == "call_service":
-                        _LOGGER.info("call_service: %s", item["service"])
-                        await self.hass.services.async_call(
-                            domain=item["domain"],
-                            service=item["service"],
-                            target={"entity_id": item["entity_id"]},
-                            blocking=True,
-                        )
-                        response_text = item.get("response", "요청하신 명령을 수행합니다.")
-                        call_service_count += 1
-                        _LOGGER.info("response_text: %s", response_text)
                 if call_service_count > 1:
                     response_text = "요청하신 명령을 수행합니다."
-            except json.JSONDecodeError:
-                # Not a JSON response, use as is
-                _LOGGER.error("json.JSONDecodeError: %s", response_text)
 
             intent_response = intent.IntentResponse(language=user_input.language)
             intent_response.async_set_speech(response_text)
@@ -290,95 +152,6 @@ Only use services and entities that exist in the current context."""
             )
             return conversation.ConversationResult(response=intent_response, conversation_id=self.entry.entry_id)
 
-    async def _get_azure_response(self, messages: list) -> str:
-        """Get response from Azure OpenAI and handle content filtering errors.
-
-        Args:
-            messages (list): List of conversation messages
-
-        Returns:
-            str: Response content or error message
-
-        """
-        try:
-            # Azure OpenAI API 호출
-            response = await self.client.chat.completions.create(
-                model=self.deployment_name, messages=messages, temperature=0.0
-            )
-            return response.choices[0].message.content
-
-        except openai.BadRequestError as err:
-            return await self._handle_bad_request_error(err)
-
-        except openai.RateLimitError:
-            _LOGGER.warning("Rate limit exceeded")
-            return "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
-
-        except openai.APIError as err:
-            _LOGGER.error("Azure OpenAI API Error: %s", str(err))
-            return "서비스에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
-
-        except Exception as err:
-            _LOGGER.error("Unexpected error: %s", str(err))
-            _LOGGER.error("Traceback: %s", traceback.format_exc())
-            return "알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
-
-    async def _handle_bad_request_error(self, err) -> str:
-        """Handle BadRequestError and process content filtering results.
-
-        Args:
-            err (openai.BadRequestError): The error object
-
-        Returns:
-            str: Formatted error message for the user
-
-        """
-        default_message = "OpenAI가 명령을 이해하지 못했습니다. 다른 표현으로 다시 시도해주세요."
-
-        try:
-            # 오류 데이터 파싱
-            error_data = err.args[0]
-            if not isinstance(error_data, str):
-                _LOGGER.error("Unexpected error data type: %s", type(error_data))
-                return default_message
-
-            error_dict = json.loads(error_data)
-            error_info = error_dict.get("error", {})
-
-            # 기본 오류 정보 로깅
-            _LOGGER.error("Azure OpenAI Error: %s", error_info.get("message", "Unknown error"))
-            _LOGGER.error("Error Code: %s", error_info.get("code", "unknown_error"))
-
-            # 콘텐츠 필터 결과 처리
-            content_filter_result = error_info.get("innererror", {}).get("content_filter_result", {})
-            if not content_filter_result:
-                return default_message
-
-            # 콘텐츠 필터 결과 로깅
-            _LOGGER.error("Content Filter Result: %s", json.dumps(content_filter_result, indent=2))
-
-            # 사용자 피드백 메시지 생성
-            feedback_lines = [
-                "요청이 Azure OpenAI의 콘텐츠 관리 정책에 의해 차단되었습니다. 다른 표현으로 요청해주세요."
-            ]
-
-            # 차단된 카테고리 정보 추가
-            for category, details in content_filter_result.items():
-                if details.get("filtered", False):
-                    severity = details.get("severity", "unknown")
-                    feedback_lines.append(f"- 차단된 카테고리: {category} (심각도: {severity})")
-
-            return "\n".join(feedback_lines)
-
-        except json.JSONDecodeError as json_err:
-            _LOGGER.error("JSON parsing error: %s", str(json_err))
-            return default_message
-
-        except Exception as parse_err:
-            _LOGGER.error("Error parsing response: %s", str(parse_err))
-            _LOGGER.error("Traceback: %s", traceback.format_exc())
-            return default_message
-
 
 class HassApiHandler:
     """Home Assistant API 처리를 위한 핸들러."""
@@ -388,10 +161,13 @@ class HassApiHandler:
         self.hass = hass
 
     async def process_api_call(self, api_call):
-        """API 호출을 처리하고 실행.
+        """Process an API call.
 
         Args:
-            api_call: ApiCall 또는 ApiCallFunction 객체
+            api_call:  API 호출 객체
+
+        Returns:
+            bool: True if successful, False if failed
 
         """
         # ApiCallFunction인 경우 arguments 추출
@@ -417,7 +193,7 @@ class HassApiHandler:
         return False
 
     def _convert_to_hass_api_call(self, api_call):
-        """API 호출을 Home Assistant 형식으로 변환."""
+        """Convert API 호출을 Home Assistant 형식."""
         parts = api_call.endpoint.split("/")
 
         # 서비스 호출 변환 (/api/services/...)
