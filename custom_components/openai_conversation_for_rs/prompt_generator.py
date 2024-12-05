@@ -1,23 +1,29 @@
-"""Generate prompts for the Home Assistant API"""
+"""Generate prompts for the Home Assistant API."""
 
-from typing import List
+import json
+import logging
+import traceback
 
+import openai
 import yaml
 
 from .message_model import SystemMessage
 from .prompts.few_shot_prompts import tv_on_off_example
 
+_LOGGER = logging.getLogger(__name__)
+
 
 class PromptGenerator:
-    """Generate prompts for the Home Assistant API"""
+    """Generate prompts for the Home Assistant API."""
 
     def __init__(self, ha_contexts, services):
+        """Initialize the prompt generator."""
         self.ha_contexts = ha_contexts
         self.entities = ha_contexts["entities"]
         self.services = services
 
     def get_datetime_prompt(self):
-        """Generate a prompt for the current date and time"""
+        """Generate a prompt for the current date and time."""
         ha_time = self.ha_contexts["time"]
         ha_date = self.ha_contexts["date"]
         ha_weekday = self.ha_contexts["weekday"]
@@ -60,7 +66,7 @@ class PromptGenerator:
 
     @staticmethod
     def get_tool():
-        """Generate a tool for the Home Assistant API"""
+        """Generate a tool for the Home Assistant API."""
         return {
             "type": "function",
             "function": {
@@ -82,7 +88,7 @@ class PromptGenerator:
 
 
 class GptHaAssistant:
-    """GPT-based Home Assistant"""
+    """GPT-based Home Assistant."""
 
     def __init__(
         self,
@@ -90,7 +96,7 @@ class GptHaAssistant:
         init_prompt: str,
         ha_automation_script: str,
         user_pattern_prompt: str,
-        tool_prompts: List[dict],
+        tool_prompts: list[dict],
         client,
     ):
         self.init_prompt = init_prompt
@@ -101,8 +107,8 @@ class GptHaAssistant:
         self.model_input_messages = []
         self.openai_client = client
 
-    def add_instructions(self, chat_history: List[dict]):
-        """Convert the chat history to JSON data"""
+    def add_instructions(self, chat_history: list[dict]):
+        """Convert the chat history to JSON data."""
         model_input_messages = []
         if self.init_prompt:
             init_prompt_message = SystemMessage(content=self.init_prompt)
@@ -116,12 +122,97 @@ class GptHaAssistant:
 
         return model_input_messages
 
-    async def chat(self, chat_history: List[dict], n=1):
-        """Chat with the GPT-based Home Assistant"""
-        self.model_input_messages = self.add_instructions(chat_history)
+    async def chat(self, chat_history: list[dict], n=1):
+        """Chat with the GPT-based Home Assistant."""
 
-        response = await self.openai_client.chat.completions.create(
-            model=self.deployment_name, messages=self.model_input_messages, tools=self.tool_prompts, n=n
-        )
+        try:
+            self.model_input_messages = self.add_instructions(chat_history)
+
+            response = await self.openai_client.chat.completions.create(
+                model=self.deployment_name, messages=self.model_input_messages, tools=self.tool_prompts, n=n
+            )
+
+        except openai.BadRequestError as err:
+            return await self._handle_bad_request_error(err)
+
+        except openai.RateLimitError:
+            _LOGGER.warning("Rate limit exceeded")
+            return self._create_error_response("Rate limit exceeded. Please try again later.")
+
+        except openai.APIError as err:
+            _LOGGER.error("Azure OpenAI API Error: %s", str(err))
+            return self._create_error_response(f"API Error: {str(err)}")
+
+        except Exception as err:
+            _LOGGER.error("Unexpected error: %s", str(err))
+            _LOGGER.error("Traceback: %s", traceback.format_exc())
+            return self._create_error_response("An unknown error occurred. Please try again later.")
 
         return response
+
+    def _create_error_response(self, message: str) -> dict:
+        """Create a standardized error response."""
+        return {
+            "id": None,
+            "object": "error",
+            "created": None,
+            "model": self.deployment_name,
+            "choices": [],
+            "error": {"message": message},
+        }
+
+    async def _handle_bad_request_error(self, err) -> str:
+        """Handle BadRequestError and process content filtering results.
+
+        Args:
+            err (openai.BadRequestError): The error object
+
+        Returns:
+            str: Formatted error message for the user
+
+        """
+        default_message = "OpenAI가 명령을 이해하지 못했습니다. 다른 표현으로 다시 시도해주세요."
+
+        try:
+            # 오류 데이터 파싱
+            error_data = err.args[0]
+            if not isinstance(error_data, str):
+                _LOGGER.error("Unexpected error data type: %s", type(error_data))
+                return default_message
+
+            error_dict = json.loads(error_data)
+            error_info = error_dict.get("error", {})
+
+            # 기본 오류 정보 로깅
+            _LOGGER.error("Azure OpenAI Error: %s", error_info.get("message", "Unknown error"))
+            _LOGGER.error("Error Code: %s", error_info.get("code", "unknown_error"))
+
+            # 콘텐츠 필터 결과 처리
+            content_filter_result = error_info.get("innererror", {}).get("content_filter_result", {})
+            if not content_filter_result:
+                return default_message
+
+            # 콘텐츠 필터 결과 로깅
+            _LOGGER.error("Content Filter Result: %s", json.dumps(content_filter_result, indent=2))
+
+            # 사용자 피드백 메시지 생성
+            feedback_lines = [
+                "요청이 Azure OpenAI의 콘텐츠 관리 정책에 의해 차단되었습니다. 다른 표현으로 요청해주세요."
+            ]
+
+            # 차단된 카테고리 정보 추가
+            for category, details in content_filter_result.items():
+                if details.get("filtered", False):
+                    severity = details.get("severity", "unknown")
+                    feedback_lines.append(f"- 차단된 카테고리: {category} (심각도: {severity})")
+
+            return "\n".join(feedback_lines)
+
+        except json.JSONDecodeError as json_err:
+            _LOGGER.error("JSON parsing error: %s", str(json_err))
+            return default_message
+
+        except Exception as parse_err:
+            _LOGGER.error("Error parsing response: %s", str(parse_err))
+            _LOGGER.error("Traceback: %s", traceback.format_exc())
+            return default_message
