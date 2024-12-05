@@ -1,10 +1,8 @@
 """The Azure OpenAI GPT conversation RS-Tuned integration."""
 
-import json
 import logging
 import traceback
 
-import openai
 from homeassistant.components import conversation, intent
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY
