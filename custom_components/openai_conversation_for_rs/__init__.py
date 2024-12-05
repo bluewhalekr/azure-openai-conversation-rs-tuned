@@ -120,6 +120,41 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
             _LOGGER.error("Traceback: %s", traceback.format_exc())
             return None
 
+    def convert_api_call_to_service_call(api_call):
+        """Convert API call format to hass.services.async_call parameters with target.
+
+        Args:
+            api_call: API call object with endpoint and body
+
+        Returns:
+            dict: Parameters for hass.services.async_call
+
+        """
+        parts = api_call.endpoint.split("/")
+        if len(parts) >= 5:
+            domain = parts[3]
+            service = parts[4]
+
+            # service_data에서 entity_id를 제외한 나머지 데이터만 포함
+            service_data = dict(api_call.body)
+            entity_id = service_data.pop("entity_id", None)
+
+            result = {
+                "domain": domain,
+                "service": service,
+            }
+
+            # entity_id가 있는 경우 target에 포함
+            if entity_id:
+                result["target"] = {"entity_id": entity_id}
+
+            # 추가 서비스 데이터가 있는 경우에만 포함
+            if service_data:
+                result["service_data"] = service_data
+
+            return result
+        return None
+
     async def async_process(self, user_input: conversation.ConversationInput) -> conversation.ConversationResult:
         """Process a sentence."""
         try:
@@ -209,10 +244,10 @@ Only use services and entities that exist in the current context."""
             response_text = await self._get_azure_response(messages)
             response_text = await self._refine_response(response_text)
 
-            # Try to parse response as JSON for device 요control
+            # Try to parse response as JSON for device control
             try:
                 response_data = json.loads(response_text)
-                # 복수 call_service가 올 수 있는 지 체크 필
+                # 복수 call_service가 올 수 있는 지 체크 필요
 
                 if isinstance(response_data, dict):
                     response_data = [response_data]  # 단일 객체를 리스트로 변환
@@ -298,7 +333,7 @@ Only use services and entities that exist in the current context."""
             str: Formatted error message for the user
 
         """
-        default_message = "OpenAI가 제 말을 이해하지 못했습니다. 다른 표현으로 다시 시도해주세요."
+        default_message = "OpenAI가 명령을 이해하지 못했습니다. 다른 표현으로 다시 시도해주세요."
 
         try:
             # 오류 데이터 파싱
@@ -343,3 +378,89 @@ Only use services and entities that exist in the current context."""
             _LOGGER.error("Error parsing response: %s", str(parse_err))
             _LOGGER.error("Traceback: %s", traceback.format_exc())
             return default_message
+
+
+class HassApiHandler:
+    """Home Assistant API 처리를 위한 핸들러."""
+
+    def __init__(self, hass):
+        """Initialize the handler."""
+        self.hass = hass
+
+    async def process_api_call(self, api_call):
+        """API 호출을 처리하고 실행.
+
+        Args:
+            api_call: ApiCall 또는 ApiCallFunction 객체
+
+        """
+        # ApiCallFunction인 경우 arguments 추출
+        if hasattr(api_call, "arguments"):
+            api_call = api_call.arguments
+
+        # API 호출 변환
+        service_params = self._convert_to_hass_api_call(api_call)
+        if service_params:
+            # Home Assistant 서비스 호출 실행
+            try:
+                await self.hass.services.async_call(
+                    domain=service_params["domain"],
+                    service=service_params["service"],
+                    target=service_params.get("target"),
+                    service_data=service_params.get("service_data"),
+                    blocking=True,
+                )
+                return True
+            except Exception as err:
+                _LOGGER.error("Failed to call Home Assistant service: %s", str(err))
+                return False
+        return False
+
+    def _convert_to_hass_api_call(self, api_call):
+        """API 호출을 Home Assistant 형식으로 변환."""
+        parts = api_call.endpoint.split("/")
+
+        # 서비스 호출 변환 (/api/services/...)
+        if len(parts) >= 5 and parts[2] == "services":
+            return self._convert_service_call(api_call)
+
+        # 자동화 설정 변환 (/api/config/automation/...)
+        elif len(parts) >= 4 and parts[2] == "config" and parts[3] == "automation":
+            return self._convert_automation_call(api_call)
+
+        return None
+
+    def _convert_service_call(self, api_call):
+        """서비스 API 호출 변환."""
+        parts = api_call.endpoint.split("/")
+        domain = parts[3]
+        service = parts[4]
+
+        # service_data에서 entity_id 분리
+        service_data = dict(api_call.body)
+        entity_id = service_data.pop("entity_id", None)
+
+        result = {"domain": domain, "service": service}
+
+        # entity_id가 있는 경우 target에 포함
+        if entity_id:
+            result["target"] = {"entity_id": entity_id}
+
+        # 추가 서비스 데이터가 있는 경우에만 포함
+        if service_data:
+            result["service_data"] = service_data
+
+        return result
+
+    def _convert_automation_call(self, api_call):
+        """자동화 설정 API 호출 변환."""
+        automation_config = {
+            "alias": api_call.body["alias"],
+            "description": "Automatically created automation",
+            "trigger": api_call.body["trigger"],
+            "action": api_call.body["action"],
+            "mode": "single",
+            "id": api_call.body["alias"],
+        }
+
+        return {"domain": "automation", "service": "create", "target": None, "service_data": automation_config}
