@@ -1,7 +1,11 @@
 """Chat manager module."""
 
+import logging
+
 from .message_model import BaseMessage
 from .prompt_manager import ClientCache
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class ChatCache(ClientCache):
@@ -40,6 +44,7 @@ class ChatManager:
     def add_message(self, message: BaseMessage):
         """Add a message to the chat."""
         messages = self.chat_cache.get_messages()
+        _LOGGER.info("[%s] history %s", self.user_name, messages)
         message.id = self.get_next_message_id(messages)
         messages.append(message)
         self.chat_cache.set_messages(messages)
