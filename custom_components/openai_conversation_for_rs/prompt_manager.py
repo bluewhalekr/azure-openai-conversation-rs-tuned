@@ -75,9 +75,6 @@ class PromptManager:
 
     def get_init_prompt(self):
         """Get the init prompt."""
-        if prompt := self.cache.get("init_prompt"):
-            return prompt
-
         return self.reset_init_prompt()
 
     def get_ha_automation_script(self):
