@@ -130,13 +130,16 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                         _LOGGER.info("tool_call: %s", tool_call)
                         api_call = tool_call.function.arguments
                         _LOGGER.info("api_call: %s", api_call)
+
                         await self.hass_api_handler.process_api_call(tool_call.function)
-
-                if call_service_count > 1:
-                    response_text = "요청하신 명령을 수행합니다."
-
-            intent_response = intent.IntentResponse(language=user_input.language)
-            intent_response.async_set_speech(response_text)
+                if call_service_count > 0:  # 컨트롤이 필요한 경우
+                    if call_service_count > 1:
+                        response_text = "요청하신 명령을 수행합니다."
+                    intent_response = intent.IntentResponse(language=user_input.language)
+                    intent_response.async_set_speech(response_text)
+                else:
+                    intent_response = intent.IntentResponse(language=user_input.language)
+                    intent_response.async_set_speech(speech=user_input.text, speech_type="chrome")
             return conversation.ConversationResult(response=intent_response, conversation_id=user_input.conversation_id)
 
         except Exception as err:
