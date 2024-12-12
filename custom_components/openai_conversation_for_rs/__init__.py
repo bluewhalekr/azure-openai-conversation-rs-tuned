@@ -136,10 +136,10 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                     if call_service_count > 1:
                         response_text = "요청하신 명령을 수행합니다."
                     intent_response = intent.IntentResponse(language=user_input.language)
-                    intent_response.async_set_speech(response_text)
+                    intent_response.async_set_speech(response_text, extra_data={"type": "gpt"})
                 else:
                     intent_response = intent.IntentResponse(language=user_input.language)
-                    intent_response.async_set_speech(speech=user_input.text, speech_type="chrome")
+                    intent_response.async_set_speech(speech=user_input.text, extra_data={"type": "chrome"})
             return conversation.ConversationResult(response=intent_response, conversation_id=user_input.conversation_id)
 
         except Exception as err:
