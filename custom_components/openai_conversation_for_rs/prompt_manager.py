@@ -8,7 +8,7 @@ from .const import DOMAIN
 file_path = os.path.dirname(__file__)
 INIT_PROMPT_PATH = os.path.join(os.path.dirname(file_path), DOMAIN, "prompts", "init_prompt.md")
 USER_PATTERN_PROMPT_PATH = os.path.join(os.path.dirname(file_path), DOMAIN, "prompts", "user_pattern_prompt.md")
-HA_AUTOMATION_SCRIPT_PATH = os.path.join(os.path.dirname(file_path), DOMAIN, "prompts", "ha_automation_script.md")
+# HA_AUTOMATION_SCRIPT_PATH = os.path.join(os.path.dirname(file_path), DOMAIN, "prompts", "ha_automation_script.md")
 
 DATA_PATH = os.path.join(file_path, DOMAIN, "chat_configs")
 HA_STATES_PATH = os.path.join(DATA_PATH, "ha_contexts", "states.json")
@@ -79,9 +79,6 @@ class PromptManager:
 
     def get_ha_automation_script(self):
         """Get the Home Assistant automation script."""
-        if script := self.cache.get("ha_automation_script"):
-            return script
-
         return self.reset_ha_automation_script()
 
     def get_user_pattern_prompt(self):
@@ -108,9 +105,6 @@ class PromptManager:
 
     def reset_ha_automation_script(self):
         """Reset the Home Assistant automation script."""
-        default_ha_automation_script = get_default_ha_automation_script()
-        self.cache.set("ha_automation_script", default_ha_automation_script)
-
         return self.cache.get("ha_automation_script")
 
     def reset_user_pattern_prompt(self):
