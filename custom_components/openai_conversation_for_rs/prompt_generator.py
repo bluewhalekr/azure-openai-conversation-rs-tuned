@@ -8,9 +8,9 @@ from typing import List
 import openai
 import tiktoken
 import yaml
-from prompts.few_shot_prompts import tv_on_off_example
 
 from .message_model import SystemMessage
+from .prompts.few_shot_prompts import tv_on_off_example
 
 _LOGGER = logging.getLogger(__name__)
 
