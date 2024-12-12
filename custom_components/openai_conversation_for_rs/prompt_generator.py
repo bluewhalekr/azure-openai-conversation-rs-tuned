@@ -8,6 +8,7 @@ from typing import List
 import openai
 import tiktoken
 import yaml
+from prompts.few_shot_prompts import tv_on_off_example
 
 from .message_model import SystemMessage
 
@@ -132,7 +133,7 @@ class GptHaAssistant:
         #    model_input_messages.append(SystemMessage(content=self.ha_automation_script).to_dict())
         if self.user_pattern_prompt:
             model_input_messages.append(SystemMessage(content=self.user_pattern_prompt).to_dict())
-        # model_input_messages.extend(tv_on_off_example)
+        model_input_messages.extend(tv_on_off_example)
         model_input_messages.extend(chat_history)
 
         return model_input_messages
@@ -141,8 +142,8 @@ class GptHaAssistant:
         """Chat with the GPT-based Home Assistant."""
 
         try:
-            cropped_chat_history = self.crop_chat_history(chat_history)
-            self.model_input_messages = self.add_instructions(cropped_chat_history)
+            # cropped_chat_history = self.crop_chat_history(chat_history)
+            self.model_input_messages = self.add_instructions(chat_history)
 
             response = await self.openai_client.chat.completions.create(
                 model=self.deployment_name, messages=self.model_input_messages, tools=self.tool_prompts, n=n
