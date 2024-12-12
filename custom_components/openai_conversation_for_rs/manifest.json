@@ -17,7 +17,7 @@
     "openai>=1.46.0,<2.0.0",
     "requests",
     "pydantic",
-    "tiktoken"
+    "tiktoken==0.7.0"
   ],
   "config_flow": true,
   "iot_class": "cloud_polling",

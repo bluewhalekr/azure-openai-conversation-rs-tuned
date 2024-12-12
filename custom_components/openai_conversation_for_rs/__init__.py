@@ -119,6 +119,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
 
             if chat_response:
                 call_service_count = 0
+                
                 response_message = chat_response.choices[0].message
                 assistant_message = AssistantMessage(**response_message.to_dict())
                 if assistant_message.content:
