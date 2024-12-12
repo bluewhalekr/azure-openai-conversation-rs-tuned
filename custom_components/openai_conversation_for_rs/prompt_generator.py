@@ -3,8 +3,10 @@
 import json
 import logging
 import traceback
+from typing import List
 
 import openai
+import tiktoken
 import yaml
 
 from .message_model import SystemMessage
@@ -106,6 +108,20 @@ class GptHaAssistant:
         self.model_input_messages = []
         self.openai_client = client
 
+    def crop_chat_history(self, chat_history: List[dict]):
+        """Crop the chat history to the last 4 messages"""
+        token_encoder = tiktoken.get_encoding("o200k_base")
+        instructions_sum = self.init_prompt + self.ha_automation_script + self.user_pattern_prompt
+        instructions_tokens = token_encoder.encode(instructions_sum)
+
+        chat_history_tokens = token_encoder.encode(json.dumps(chat_history))
+        while len(instructions_tokens) + len(chat_history_tokens) > 128000:
+            for i, message in enumerate(chat_history[::-1], start=1):
+                if message["role"] == "user":
+                    chat_history = chat_history[: -(i + 3)]
+            chat_history_tokens = token_encoder.encode(json.dumps(chat_history))
+        return chat_history
+
     def add_instructions(self, chat_history: list[dict]):
         """Convert the chat history to JSON data."""
         model_input_messages = []
@@ -125,7 +141,8 @@ class GptHaAssistant:
         """Chat with the GPT-based Home Assistant."""
 
         try:
-            self.model_input_messages = self.add_instructions(chat_history)
+            cropped_chat_history = self.crop_chat_history(chat_history)
+            self.model_input_messages = self.add_instructions(cropped_chat_history)
 
             response = await self.openai_client.chat.completions.create(
                 model=self.deployment_name, messages=self.model_input_messages, tools=self.tool_prompts, n=n
