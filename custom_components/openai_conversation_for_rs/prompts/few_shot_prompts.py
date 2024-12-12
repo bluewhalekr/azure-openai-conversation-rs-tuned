@@ -19,4 +19,8 @@ tv_on_off_example = [
     {"role": "tool", "content": '{"status_code": 200, "text": "[]"}', "tool_call_id": "call_azg0GnUsNXXkDfkDMyr9BZCG"},
     {"role": "user", "content": "유튜브로 qwer 검색해줘"},
     {"role": "assistant", "content": "youtube_domain_flg"},
+    {"role": "user", "content": "첫번째 영상 재생해줘"},
+    {"role": "assistant", "content": "youtube_domain_flg"},
+    {"role": "user", "content": "ㄲㄴ디ㅑㅚㅓ"},
+    {"role": "assistant", "content": "명령어를 이해하지 못했습니다. 다시 말씀해주세요."},
 ]
