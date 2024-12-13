@@ -11,7 +11,7 @@ on:
 
 jobs:
   version-bump-and-release:
-    runs-on: ubuntu-latest
+    runs-on: azure-openai-conversation-rs-tuned
     permissions:
       contents: write
     

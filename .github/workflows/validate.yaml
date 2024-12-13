@@ -10,7 +10,7 @@ on:
 
 jobs:
   validate-hacs:
-    runs-on: ubuntu-latest
+    runs-on: azure-openai-conversation-rs-tuned
     steps:
       - uses: actions/checkout@v4
       - name: HACS validation
@@ -19,7 +19,7 @@ jobs:
           category: integration
 
   hassfest:
-    runs-on: ubuntu-latest
+    runs-on: azure-openai-conversation-rs-tuned
     steps:
       - uses: actions/checkout@v4
       - uses: home-assistant/actions/hassfest@master
