@@ -119,7 +119,7 @@ class GptHaAssistant:
         #    model_input_messages.append(SystemMessage(content=self.ha_automation_script).to_dict())
         if self.user_pattern_prompt:
             model_input_messages.append(SystemMessage(content=self.user_pattern_prompt).to_dict())
-        model_input_messages.extend(tv_on_off_example)
+        # model_input_messages.extend(tv_on_off_example)
         model_input_messages.extend(chat_history)
 
         return model_input_messages
