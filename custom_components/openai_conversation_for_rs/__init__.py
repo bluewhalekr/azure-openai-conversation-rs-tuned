@@ -160,7 +160,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
 
                     await self.hass_api_handler.process_api_call(tool_call.function)
             # TODO manually return response_text
-            if "youtube_domain_flg" in response_text:
+            if "googlecast_domain_flg" in response_text:
                 intent_response = intent.IntentResponse(language=user_input.language)
                 intent_response.async_set_speech(speech=user_input.text, extra_data={"type": "chrome"})
             else:
