@@ -191,7 +191,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
             dict: response from the cache server
 
         """
-        headers = {"x-functions-key": self.entry.data[CONF_API_KEY]}
+        headers = {"x-functions-key": self.entry.data[CONF_API_KEY], "Content-Type": "application/json"}
         data = {"speaker_id": speaker_id, "user_input": user_input}
         _LOGGER.info("Cache request: %s", data)
         async with aiohttp.ClientSession() as session:
