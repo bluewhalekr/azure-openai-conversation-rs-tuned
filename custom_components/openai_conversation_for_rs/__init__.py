@@ -181,18 +181,19 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
             )
             return conversation.ConversationResult(response=intent_response, conversation_id=self.entry.entry_id)
 
-    async def send_cache_request(self, speaker_id: str, user_input: str):
+    async def send_cache_request(self, speaker_id: str, input_text: str):
         """Send cache request to the cache server.
 
         Args:
-            speaker_id: speaker_id
-            user_input: user_input
+            speaker_id: speaker_id is consist of mac address and user_id
+            input_text: user input,
+
         Returns:
             dict: response from the cache server
 
         """
         headers = {"x-functions-key": self.entry.data[CONF_API_KEY], "Content-Type": "application/json"}
-        data = {"speaker_id": speaker_id, "user_input": user_input}
+        data = {"speaker_id": speaker_id, "input_text": input_text}
         _LOGGER.info("Cache request: %s", data)
         async with aiohttp.ClientSession() as session:
             try:
