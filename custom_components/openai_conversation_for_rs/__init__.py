@@ -20,6 +20,7 @@ from .prompt_generator import GptHaAssistant, PromptGenerator
 from .prompt_manager import PromptManager
 
 _LOGGER = logging.getLogger(__name__)
+_LOGGER.setLevel(logging.DEBUG)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -184,6 +185,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
         """
         headers = {"x-functions-key": CONF_API_KEY}
         data = {"speaker_id": speaker_id, "user_input": user_input}
+        _LOGGER.info("Cache request: %s", data)
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.post(CACHE_ENDPOINT, json=data, headers=headers) as response:
