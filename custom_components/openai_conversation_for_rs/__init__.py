@@ -103,6 +103,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
 
             _LOGGER.info("speaker_id: %s", speaker_id)
             _LOGGER.info("input_text: %s", user_input.text)
+            chat_manager = ChatManager(speaker_id)
 
             # Check to cache, when user_input.text is hitted.
             cached_response = await self.send_cache_request(speaker_id, user_input.text)
