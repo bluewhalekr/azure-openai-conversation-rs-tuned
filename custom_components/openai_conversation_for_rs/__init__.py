@@ -108,58 +108,66 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
             cached_response = await self.send_cache_request(speaker_id, user_input.text)
             if cached_response:
                 _LOGGER.info("cached_response: %s", cached_response)
+                data = cached_response.get("Data", {})
+                if not data.get("role"):  # role은 필수 필드
+                    raise RuntimeError("Missing required 'role' field in cached response Data")
 
-            chat_manager = ChatManager(speaker_id)
-            prompt_generator = PromptGenerator(ha_states, ha_services)
-            system_datetime_prompt = prompt_generator.get_datetime_prompt()
-            system_entities_prompt = prompt_generator.get_entities_system_prompt()
-            system_services_prompt = prompt_generator.get_services_system_prompt()
+                assistant_message = AssistantMessage(**data)
 
-            gpt_ha_assistant = GptHaAssistant(
-                deployment_name=self.deployment_name,
-                init_prompt=self.prompt_manager.get_init_prompt(),
-                ha_automation_script=self.prompt_manager.get_ha_automation_script(),
-                user_pattern_prompt=self.prompt_manager.get_user_pattern_prompt(),
-                tool_prompts=[prompt_generator.get_tool()],
-                client=self.client,
-            )
-            # 만약 입력단에 || 가 포함되어 있으면 speaker_id가 포함된 것을 간주
+            else:
+                chat_manager = ChatManager(speaker_id)
+                prompt_generator = PromptGenerator(ha_states, ha_services)
+                system_datetime_prompt = prompt_generator.get_datetime_prompt()
+                system_entities_prompt = prompt_generator.get_entities_system_prompt()
+                system_services_prompt = prompt_generator.get_services_system_prompt()
 
-            chat_manager.add_message(UserMessage(content=user_input.text))
-            chat_manager.add_message(SystemMessage(**system_datetime_prompt))
-            chat_manager.add_message(SystemMessage(**system_entities_prompt))
-            chat_manager.add_message(SystemMessage(**system_services_prompt))
+                gpt_ha_assistant = GptHaAssistant(
+                    deployment_name=self.deployment_name,
+                    init_prompt=self.prompt_manager.get_init_prompt(),
+                    ha_automation_script=self.prompt_manager.get_ha_automation_script(),
+                    user_pattern_prompt=self.prompt_manager.get_user_pattern_prompt(),
+                    tool_prompts=[prompt_generator.get_tool()],
+                    client=self.client,
+                )
+                # 만약 입력단에 || 가 포함되어 있으면 speaker_id가 포함된 것을 간주
 
-            chat_input_messages = chat_manager.get_chat_input()
-            _LOGGER.info("chat_input_messages: %s", chat_input_messages)
-            chat_response = await gpt_ha_assistant.chat(chat_input_messages)
-            _LOGGER.info("chat_response: %s", chat_response)
+                chat_manager.add_message(UserMessage(content=user_input.text))
+                chat_manager.add_message(SystemMessage(**system_datetime_prompt))
+                chat_manager.add_message(SystemMessage(**system_entities_prompt))
+                chat_manager.add_message(SystemMessage(**system_services_prompt))
 
-            if chat_response:
-                call_service_count = 0
+                chat_input_messages = chat_manager.get_chat_input()
+                _LOGGER.info("chat_input_messages: %s", chat_input_messages)
+                chat_response = await gpt_ha_assistant.chat(chat_input_messages)
+                _LOGGER.info("chat_response: %s", chat_response)
 
-                response_message = chat_response.choices[0].message
+                if chat_response:
+                    response_message = chat_response.choices[0].message
                 assistant_message = AssistantMessage(**response_message.to_dict())
-                if assistant_message.content:
-                    response_text = assistant_message.content
-                chat_manager.add_message(assistant_message)
-                if tool_calls := assistant_message.tool_calls:
-                    for tool_call in tool_calls:
-                        call_service_count += 1
-                        _LOGGER.info("tool_call: %s", tool_call)
-                        api_call = tool_call.function.arguments
-                        _LOGGER.info("api_call: %s", api_call)
 
-                        await self.hass_api_handler.process_api_call(tool_call.function)
-                # TODO manually return response_text
-                if "youtube_domain_flg" in response_text:
-                    intent_response = intent.IntentResponse(language=user_input.language)
-                    intent_response.async_set_speech(speech=user_input.text, extra_data={"type": "chrome"})
-                else:
-                    if call_service_count > 1:
-                        response_text = "요청하신 명령을 수행합니다."
-                    intent_response = intent.IntentResponse(language=user_input.language)
-                    intent_response.async_set_speech(response_text, extra_data={"type": "gpt"})
+            call_service_count = 0
+
+            if assistant_message.content:
+                response_text = assistant_message.content
+
+            chat_manager.add_message(assistant_message)
+            if tool_calls := assistant_message.tool_calls:
+                for tool_call in tool_calls:
+                    call_service_count += 1
+                    _LOGGER.info("tool_call: %s", tool_call)
+                    api_call = tool_call.function.arguments
+                    _LOGGER.info("api_call: %s", api_call)
+
+                    await self.hass_api_handler.process_api_call(tool_call.function)
+            # TODO manually return response_text
+            if "youtube_domain_flg" in response_text:
+                intent_response = intent.IntentResponse(language=user_input.language)
+                intent_response.async_set_speech(speech=user_input.text, extra_data={"type": "chrome"})
+            else:
+                if call_service_count > 1:
+                    response_text = "요청하신 명령을 수행합니다."
+                intent_response = intent.IntentResponse(language=user_input.language)
+                intent_response.async_set_speech(response_text, extra_data={"type": "gpt"})
             return conversation.ConversationResult(response=intent_response, conversation_id=user_input.conversation_id)
 
         except Exception as err:
@@ -188,7 +196,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
         _LOGGER.info("Cache request: %s", data)
         async with aiohttp.ClientSession() as session:
             try:
-                async with session.post(CACHE_ENDPOINT, json=data, headers=headers) as response:
+                async with session.post(CACHE_ENDPOINT, data=data, headers=headers) as response:
                     if response.status == 200:
                         result = await response.json()
                         _LOGGER.info("Response: %s", result)
