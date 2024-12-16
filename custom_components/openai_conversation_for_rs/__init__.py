@@ -289,15 +289,15 @@ class HassApiHandler:
     def _convert_automation_call(self, api_call):
         """api_call 데이터를 Home Assistant 서비스 호출 데이터로 변환합니다."""
         # 입력 데이터 검증
-        if api_call["method"].lower() != "post" or "body" not in api_call:
+        if api_call.method.lower() != "post":
             return None
 
         # endpoint에서 automation ID 추출
-        endpoint = api_call["endpoint"]
+        endpoint = api_call.endpoint
         automation_id = endpoint.split("/")[-1]
 
         # body 데이터를 service_data로 변환
-        body = api_call["body"]
+        body = api_call.body
         trigger = body.get("trigger", {})
         action = body.get("action", {})
         condition = body.get("condition", {})
