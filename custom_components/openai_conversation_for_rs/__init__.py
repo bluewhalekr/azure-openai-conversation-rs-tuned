@@ -99,6 +99,8 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                     user_input.text = user_input_text[1]
                     speaker_id = user_input_text[0]
 
+            _LOGGER.info("speaker_id: %s", speaker_id)
+            _LOGGER.info("input_text: %s", user_input.text)
             ## Check to cache
             chat_manager = ChatManager(speaker_id)
             prompt_generator = PromptGenerator(ha_states, ha_services)
