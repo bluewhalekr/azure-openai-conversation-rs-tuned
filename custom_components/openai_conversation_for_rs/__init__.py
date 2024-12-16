@@ -20,6 +20,7 @@ from .prompt_generator import GptHaAssistant, PromptGenerator
 from .prompt_manager import PromptManager
 
 _LOGGER = logging.getLogger(__name__)
+_LOGGER.setLevel(logging.DEBUG)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
