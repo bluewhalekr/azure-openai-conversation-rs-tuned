@@ -10,7 +10,6 @@ import tiktoken
 import yaml
 
 from .message_model import SystemMessage
-from .prompts.few_shot_prompts import tv_on_off_example
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -142,7 +141,7 @@ class GptHaAssistant:
         """Chat with the GPT-based Home Assistant."""
 
         try:
-            _LOGGER.debug("Chat history: %s", chat_history)
+            # _LOGGER.debug("Chat history: %s", chat_history)
             # cropped_chat_history = self.crop_chat_history(chat_history)
             self.model_input_messages = self.add_instructions(chat_history)
 

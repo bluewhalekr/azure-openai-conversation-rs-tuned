@@ -13,7 +13,14 @@ from homeassistant.helpers.typing import ConfigType
 from openai import AsyncAzureOpenAI
 
 from .chat_manager import ChatManager
-from .const import CACHE_ENDPOINT, CONF_DEPLOYMENT_NAME, DOMAIN, FIXED_ENDPOINT
+from .const import (
+    BLENDER_BRIDGE_ENDPOINT,
+    BLENDER_LIGHT_ENTITY,
+    CACHE_ENDPOINT,
+    CONF_DEPLOYMENT_NAME,
+    DOMAIN,
+    FIXED_ENDPOINT,
+)
 from .ha_crawler import HaCrawler
 from .message_model import AssistantMessage, SystemMessage, UserMessage
 from .prompt_generator import GptHaAssistant, PromptGenerator
@@ -141,9 +148,13 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                 chat_response = await gpt_ha_assistant.chat(chat_input_messages)
                 _LOGGER.info("chat_response: %s", chat_response)
 
-                if chat_response:
+                assistant_message = AssistantMessage()
+                if isinstance(chat_response, str):
+                    # Handle string response
+                    assistant_message = AssistantMessage(content=chat_response, role="assistant")
+                elif chat_response and hasattr(chat_response, "choices") and isinstance(chat_response.choices, list):
                     response_message = chat_response.choices[0].message
-                assistant_message = AssistantMessage(**response_message.to_dict())
+                    assistant_message = AssistantMessage(**response_message.to_dict())
 
             call_service_count = 0
 
@@ -270,6 +281,36 @@ class HassApiHandler:
         domain = parts[3]
         service = parts[4]
 
+        async def _synch_blender_bridge():
+            """블렌더 브릿지 동기화."""
+            parts = api_call.endpoint.split("/")
+            service = parts[4]
+
+            # service_data에서 entity_id 분리
+            service_data = dict(api_call.body)
+            entity_id = service_data.pop("entity_id", None)
+            entity_id = entity_id.split(".")[1]
+            path = "/control-light"
+            if entity_id not in BLENDER_LIGHT_ENTITY:
+                return None
+            data = {"name": entity_id, "status": "on" if service == "turn_on" else "off"}
+            _LOGGER.info("blender request: %s", data)
+            async with aiohttp.ClientSession() as session:
+                try:
+                    async with session.post(BLENDER_BRIDGE_ENDPOINT + path, json=data) as response:
+                        if response.status == 200:
+                            result = await response.json()
+                            _LOGGER.info("Response: %s", result)
+                            return result
+                        _LOGGER.info("Failed with status code: %s", response.status)
+                        error_text = await response.text()
+                        _LOGGER.info("Error response: %s", error_text)
+                        return None
+                except Exception:
+                    _LOGGER.error(traceback.format_exc())
+                    return None
+
+        self.hass.async_create_task(_synch_blender_bridge())
         # service_data에서 entity_id 분리
         service_data = dict(api_call.body)
         entity_id = service_data.pop("entity_id", None)
