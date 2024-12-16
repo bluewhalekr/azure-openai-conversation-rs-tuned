@@ -240,7 +240,7 @@ class HassApiHandler:
                 await self.hass.services.async_call(
                     domain=service_params["domain"],
                     service=service_params["service"],
-                    target=service_params.get("target"),
+                    target=service_params.get("target", {}),
                     service_data=service_params.get("service_data"),
                     blocking=True,
                 )
@@ -287,15 +287,32 @@ class HassApiHandler:
         return result
 
     def _convert_automation_call(self, api_call):
-        """자동화 설정 API 호출 변환."""
-        alias = api_call.endpoint.split("/")[-1]
-        automation_config = {
-            "alias": alias,
-            "description": "Automatically created automation",
-            "trigger": api_call.body["trigger"],
-            "action": api_call.body["action"],
+        """api_call 데이터를 Home Assistant 서비스 호출 데이터로 변환합니다."""
+        # 입력 데이터 검증
+        if api_call["method"].lower() != "post" or "body" not in api_call:
+            return None
+
+        # endpoint에서 automation ID 추출
+        endpoint = api_call["endpoint"]
+        automation_id = endpoint.split("/")[-1]
+
+        # body 데이터를 service_data로 변환
+        body = api_call["body"]
+        trigger = body.get("trigger", {})
+        action = body.get("action", {})
+        condition = body.get("condition", {})
+
+        # automation.create 서비스에 필요한 데이터 구성
+        service_data = {
+            "alias": automation_id,
+            "trigger": [trigger],
+            "action": [action],
+            "condition": [condition] if condition else [],
             "mode": "single",
-            "id": alias,
         }
 
-        return {"domain": "automation", "service": "create", "target": None, "service_data": automation_config}
+        return {
+            "domain": "automation",
+            "service": "create",
+            "service_data": service_data,
+        }
