@@ -92,7 +92,15 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                 _LOGGER.error("Traceback: %s", traceback.format_exc())
                 context = "Unable to fetch current home state."
 
-            chat_manager = ChatManager(self.entry.entry_id)
+            speaker_id = self.entry.entry_id
+            if user_input.text:
+                user_input_text = user_input.text.split("||")
+                if len(user_input_text) == 2:
+                    user_input.text = user_input_text[1]
+                    speaker_id = user_input_text[0]
+
+            ## Check to cache
+            chat_manager = ChatManager(speaker_id)
             prompt_generator = PromptGenerator(ha_states, ha_services)
             system_datetime_prompt = prompt_generator.get_datetime_prompt()
             system_entities_prompt = prompt_generator.get_entities_system_prompt()
@@ -106,6 +114,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                 tool_prompts=[prompt_generator.get_tool()],
                 client=self.client,
             )
+            # 만약 입력단에 || 가 포함되어 있으면 speaker_id가 포함된 것을 간주
 
             chat_manager.add_message(UserMessage(content=user_input.text))
             chat_manager.add_message(SystemMessage(**system_datetime_prompt))
