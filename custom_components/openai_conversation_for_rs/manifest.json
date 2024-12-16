@@ -18,7 +18,8 @@
     "requests",
     "pydantic",
     "tiktoken==0.7.0",
-    "aiofiles"
+    "aiofiles",
+    "aiohttp"
   ],
   "config_flow": true,
   "iot_class": "cloud_polling",

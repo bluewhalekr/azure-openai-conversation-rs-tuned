@@ -3,6 +3,7 @@
 import logging
 import traceback
 
+import aiohttp
 from homeassistant.components import conversation, intent
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY
@@ -12,7 +13,7 @@ from homeassistant.helpers.typing import ConfigType
 from openai import AsyncAzureOpenAI
 
 from .chat_manager import ChatManager
-from .const import CONF_DEPLOYMENT_NAME, DOMAIN, FIXED_ENDPOINT
+from .const import CACHE_ENDPOINT, CONF_DEPLOYMENT_NAME, DOMAIN, FIXED_ENDPOINT
 from .ha_crawler import HaCrawler
 from .message_model import AssistantMessage, SystemMessage, UserMessage
 from .prompt_generator import GptHaAssistant, PromptGenerator
@@ -101,7 +102,12 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
 
             _LOGGER.info("speaker_id: %s", speaker_id)
             _LOGGER.info("input_text: %s", user_input.text)
-            ## Check to cache
+
+            # Check to cache, when user_input.text is hitted.
+            cached_response = await self.send_cache_request(speaker_id, user_input.text)
+            if cached_response:
+                _LOGGER.info("cached_response: %s", cached_response)
+
             chat_manager = ChatManager(speaker_id)
             prompt_generator = PromptGenerator(ha_states, ha_services)
             system_datetime_prompt = prompt_generator.get_datetime_prompt()
@@ -165,6 +171,33 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                 f"Sorry, I had a problem talking to OpenAI: {err}",
             )
             return conversation.ConversationResult(response=intent_response, conversation_id=self.entry.entry_id)
+
+    async def send_cache_request(self, speaker_id: str, user_input: str):
+        """Send cache request to the cache server.
+
+        Args:
+            speaker_id: speaker_id
+            user_input: user_input
+        Returns:
+            dict: response from the cache server
+
+        """
+        headers = {"x-functions-key": CONF_API_KEY}
+        data = {"speaker_id": speaker_id, "user_input": user_input}
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.post(CACHE_ENDPOINT, json=data, headers=headers) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        _LOGGER.info("Response: %s", result)
+                        return result
+                    _LOGGER.info("Failed with status code: %s", response.status)
+                    error_text = await response.text()
+                    _LOGGER.info("Error response: %s", error_text)
+                    return None
+            except Exception:
+                _LOGGER.error(traceback.format_exc())
+                return None
 
 
 class HassApiHandler:
