@@ -8,7 +8,6 @@ from .const import DOMAIN
 file_path = os.path.dirname(__file__)
 INIT_PROMPT_PATH = os.path.join(os.path.dirname(file_path), DOMAIN, "prompts", "init_prompt.md")
 USER_PATTERN_PROMPT_PATH = os.path.join(os.path.dirname(file_path), DOMAIN, "prompts", "user_pattern_prompt.md")
-# HA_AUTOMATION_SCRIPT_PATH = os.path.join(os.path.dirname(file_path), DOMAIN, "prompts", "ha_automation_script.md")
 
 DATA_PATH = os.path.join(file_path, DOMAIN, "chat_configs")
 HA_STATES_PATH = os.path.join(DATA_PATH, "ha_contexts", "states.json")
@@ -51,12 +50,6 @@ def get_default_ha_services():
 def get_default_init_prompt():
     """Get the default init prompt."""
     with open(INIT_PROMPT_PATH, encoding="utf-8") as f:
-        return f.read()
-
-
-def get_default_ha_automation_script():
-    """Get the default Home Assistant automation script."""
-    with open(HA_AUTOMATION_SCRIPT_PATH, encoding="utf-8") as f:
         return f.read()
 
 
