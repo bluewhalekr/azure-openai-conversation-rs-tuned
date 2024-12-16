@@ -288,13 +288,14 @@ class HassApiHandler:
 
     def _convert_automation_call(self, api_call):
         """자동화 설정 API 호출 변환."""
+        alias = api_call.endpoint.split("/")[-1]
         automation_config = {
-            "alias": api_call.body["alias"],
+            "alias": alias,
             "description": "Automatically created automation",
             "trigger": api_call.body["trigger"],
             "action": api_call.body["action"],
             "mode": "single",
-            "id": api_call.body["alias"],
+            "id": alias,
         }
 
         return {"domain": "automation", "service": "create", "target": None, "service_data": automation_config}
