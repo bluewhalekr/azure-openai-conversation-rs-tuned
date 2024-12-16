@@ -196,7 +196,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
         _LOGGER.info("Cache request: %s", data)
         async with aiohttp.ClientSession() as session:
             try:
-                async with session.post(CACHE_ENDPOINT, data=data, headers=headers) as response:
+                async with session.post(CACHE_ENDPOINT, json=data, headers=headers) as response:
                     if response.status == 200:
                         result = await response.json()
                         _LOGGER.info("Response: %s", result)
