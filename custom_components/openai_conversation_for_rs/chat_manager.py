@@ -48,7 +48,8 @@ class ChatManager:
     def add_message(self, message: BaseMessage):
         """Add a message to the chat."""
         messages = self.chat_cache.get_messages()
-        _LOGGER.info("[%s] history %s", self.user_name, messages)
+        # TODO self.user_name 이 speaker_id 가 되어야 함..
+        # _LOGGER.info("[%s] history %s", self.user_name, messages)
         message.id = self.get_next_message_id(messages)
         messages.append(message)
         self.chat_cache.set_messages(messages)
