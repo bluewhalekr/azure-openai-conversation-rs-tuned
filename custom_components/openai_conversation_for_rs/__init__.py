@@ -108,11 +108,10 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
             cached_response = await self.send_cache_request(speaker_id, user_input.text)
             if cached_response:
                 _LOGGER.info("cached_response: %s", cached_response)
-                data = cached_response.get("Data", {})
-                if not data.get("role"):  # role은 필수 필드
+                if not cached_response.get("role"):  # role은 필수 필드
                     raise RuntimeError("Missing required 'role' field in cached response Data")
 
-                assistant_message = AssistantMessage(**data)
+                assistant_message = AssistantMessage(**cached_response)
 
             else:
                 chat_manager = ChatManager(speaker_id)
