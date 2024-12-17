@@ -6,18 +6,19 @@ import traceback
 import uuid
 from collections.abc import Callable
 from datetime import timedelta
-from typing import Any, Dict
+from typing import Any
 
 import aiohttp
-from homeassistant.components import conversation, intent, mqtt
+from homeassistant.components import conversation, mqtt
 from homeassistant.components.automation import DOMAIN as AUTOMATION_DOMAIN
 from homeassistant.components.automation import AutomationEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import Script, intent
+from homeassistant.helpers import intent
 from homeassistant.helpers.condition import async_from_config
 from homeassistant.helpers.entity_component import EntityComponent
+from homeassistant.helpers.script import Script
 from homeassistant.helpers.typing import ConfigType
 from openai import AsyncAzureOpenAI
 
