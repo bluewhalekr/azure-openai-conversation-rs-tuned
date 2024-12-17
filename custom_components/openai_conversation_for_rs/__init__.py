@@ -1,10 +1,11 @@
 """The Azure OpenAI GPT conversation RS-Tuned integration."""
 
+import json
 import logging
 import traceback
 
 import aiohttp
-from homeassistant.components import conversation, intent
+from homeassistant.components import conversation, intent, mqtt
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY
 from homeassistant.core import HomeAssistant
@@ -110,6 +111,9 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
 
             _LOGGER.info("speaker_id: %s", speaker_id)
             _LOGGER.info("input_text: %s", user_input.text)
+
+            self.hass.async_create_task(self._publish_speaker_status(speaker_id[:-2], user_input.text))
+
             chat_manager = ChatManager(speaker_id)
 
             # Check to cache, when user_input.text is hitted.
@@ -191,6 +195,15 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                 f"Sorry, I had a problem talking to OpenAI: {err}",
             )
             return conversation.ConversationResult(response=intent_response, conversation_id=self.entry.entry_id)
+
+    async def _publish_speaker_status(self, speaker_id: str, message: str) -> None:
+        """Publish speaker status to MQTT."""
+        payload = {"current": speaker_id, "message": message}
+
+        # MQTT 메시지 발행
+        await mqtt.async_publish(
+            self.hass, topic="home/speaker/status", payload=json.dumps(payload), qos=0, retain=False
+        )
 
     async def send_cache_request(self, speaker_id: str, input_text: str):
         """Send cache request to the cache server.
