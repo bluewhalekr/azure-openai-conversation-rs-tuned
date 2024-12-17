@@ -113,7 +113,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
             _LOGGER.info("input_text: %s", user_input.text)
 
             # TODO show speaker recognition for demo, have to remove after demo
-            self.hass.async_create_task(self._publish_speaker_status(speaker_id[:-2], user_input.text))
+            self.hass.async_create_task(self._publish_speaker_status(speaker_id[-2:], user_input.text))
 
             chat_manager = ChatManager(speaker_id)
 
