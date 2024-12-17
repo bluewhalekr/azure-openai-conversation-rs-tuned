@@ -9,6 +9,7 @@ from datetime import timedelta
 from typing import Any
 
 import aiohttp
+import netifaces
 from homeassistant.components import conversation, mqtt
 from homeassistant.components.automation import DOMAIN as AUTOMATION_DOMAIN
 from homeassistant.components.automation import AutomationEntity
@@ -38,6 +39,7 @@ from .prompt_manager import PromptManager
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.DEBUG)
+SYSTEM_MAC_ADDRESS = netifaces.ifaddresses("end0")[netifaces.AF_PACKET][0]["addr"]
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -111,7 +113,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                 _LOGGER.error("Traceback: %s", traceback.format_exc())
                 context = "Unable to fetch current home state."
 
-            speaker_id = self.entry.entry_id
+            speaker_id = SYSTEM_MAC_ADDRESS
             if user_input.text:
                 user_input_text = user_input.text.split("||")
                 if len(user_input_text) == 2:
