@@ -114,8 +114,6 @@ class GptHaAssistant:
         if self.init_prompt:
             init_prompt_message = SystemMessage(content=self.init_prompt)
             model_input_messages.append(init_prompt_message.to_dict())
-        # if self.ha_automation_script:
-        #    model_input_messages.append(SystemMessage(content=self.ha_automation_script).to_dict())
         if self.user_pattern_prompt:
             model_input_messages.append(SystemMessage(content=self.user_pattern_prompt).to_dict())
         # model_input_messages.extend(tv_on_off_example)
