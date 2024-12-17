@@ -1,12 +1,11 @@
 """Manage the prompts for the OpenAI conversation."""
 
-import asyncio
 import json
 import os
 
-import aiofiles
-
 from .const import DOMAIN
+from .prompts.init_prompt import INIT_PROMPT
+from .prompts.user_pattern_prompt import USER_PATTERNS_PROMPT
 
 file_path = os.path.dirname(__file__)
 INIT_PROMPT_PATH = os.path.join(os.path.dirname(file_path), DOMAIN, "prompts", "init_prompt.md")
@@ -52,24 +51,12 @@ def get_default_ha_services():
 
 def get_default_init_prompt():
     """Get the default init prompt."""
-
-    async def _async_read():
-        async with aiofiles.open(INIT_PROMPT_PATH, encoding="utf-8") as f:
-            return await f.read()
-
-    try:
-        # 기존 이벤트 루프가 있는 경우
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(_async_read())
-    except RuntimeError:
-        # 이벤트 루프가 없는 경우
-        return asyncio.run(_async_read())
+    return INIT_PROMPT
 
 
 def get_default_user_pattern_prompt():
     """Get the default last prompt."""
-    with open(USER_PATTERN_PROMPT_PATH, encoding="utf-8") as f:
-        return f.read()
+    return USER_PATTERNS_PROMPT
 
 
 class PromptManager:
