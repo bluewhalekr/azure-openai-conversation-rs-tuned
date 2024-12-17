@@ -18,7 +18,7 @@ class ChatCache(ClientCache):
 
     def get_messages(self):
         """Get the messages."""
-        messages = []  # self.get(self.cache_key, [])
+        messages = self.get(self.cache_key, [])
         _LOGGER.info("====================================")
         _LOGGER.info(f"{self.client_id} has messages: {len(messages)}")
         _LOGGER.info("====================================")
