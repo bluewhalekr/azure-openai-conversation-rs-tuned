@@ -383,6 +383,8 @@ class HassApiHandler:
             # service_data에서 entity_id 분리
             service_data = dict(api_call.body)
             entity_id = service_data.pop("entity_id", None)
+            if entity_id is None:
+                return None
             entity_id = entity_id.split(".")[1]
             path = "/control-light"
             if entity_id not in BLENDER_LIGHT_ENTITY:
