@@ -4,6 +4,7 @@ import json
 import os
 
 from .const import DOMAIN
+from .prompts import INIT_PROMPT, USER_PATTERNS_PROMPT
 
 file_path = os.path.dirname(__file__)
 INIT_PROMPT_PATH = os.path.join(os.path.dirname(file_path), DOMAIN, "prompts", "init_prompt.md")
@@ -49,14 +50,12 @@ def get_default_ha_services():
 
 def get_default_init_prompt():
     """Get the default init prompt."""
-    with open(INIT_PROMPT_PATH, encoding="utf-8") as f:
-        return f.read()
+    return INIT_PROMPT
 
 
 def get_default_user_pattern_prompt():
     """Get the default last prompt."""
-    with open(USER_PATTERN_PROMPT_PATH, encoding="utf-8") as f:
-        return f.read()
+    return USER_PATTERNS_PROMPT
 
 
 class PromptManager:
