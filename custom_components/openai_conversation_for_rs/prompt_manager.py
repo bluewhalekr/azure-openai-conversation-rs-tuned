@@ -4,7 +4,8 @@ import json
 import os
 
 from .const import DOMAIN
-from .prompts import INIT_PROMPT, USER_PATTERNS_PROMPT
+from .prompts.init_prompt import INIT_PROMPT
+from .prompts.user_pattern_prompt import USER_PATTERNS_PROMPT
 
 file_path = os.path.dirname(__file__)
 INIT_PROMPT_PATH = os.path.join(os.path.dirname(file_path), DOMAIN, "prompts", "init_prompt.md")
