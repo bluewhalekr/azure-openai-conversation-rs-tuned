@@ -26,6 +26,7 @@ from openai import AsyncAzureOpenAI
 from .chat_manager import ChatManager
 from .const import (
     BLENDER_BRIDGE_ENDPOINT,
+    BLENDER_DEVICE_ENTITY,
     BLENDER_LIGHT_ENTITY,
     CACHE_ENDPOINT,
     CONF_DEPLOYMENT_NAME,
@@ -388,7 +389,11 @@ class HassApiHandler:
                 return None
             entity_id = entity_id.split(".")[1]
             path = "/control-light"
-            if entity_id not in BLENDER_LIGHT_ENTITY:
+            if entity_id in BLENDER_LIGHT_ENTITY:
+                path = "/control-light"
+            elif entity_id in BLENDER_DEVICE_ENTITY:
+                path = "/control-device"
+            else:
                 return None
             data = {"name": entity_id, "status": "on" if service == "turn_on" else "off"}
             _LOGGER.info("blender request: %s", data)

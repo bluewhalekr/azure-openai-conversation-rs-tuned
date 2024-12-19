@@ -21,3 +21,4 @@ BLENDER_LIGHT_ENTITY = [
     "hwajangsil_deung",
     "jubang_deung",
 ]
+BLENDER_DEVICE_ENTITY = ["chromecast", "seonpunggi", "robosceongsogi", "gonggiceongjeonggi"]
