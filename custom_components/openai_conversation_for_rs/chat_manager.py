@@ -1,6 +1,7 @@
 """Chat manager module."""
 
 import logging
+from typing import List
 
 from .message_model import BaseMessage
 from .prompt_manager import ClientCache
@@ -24,14 +25,14 @@ class ChatCache(ClientCache):
         _LOGGER.info("====================================")
         return messages
 
-    def _limit_messages(self, messages, trigger_limit=20):
+    def _limit_messages(self, messages: List[BaseMessage], trigger_limit=20):
         """Limit the number of messages to 20."""
         while len(messages) > trigger_limit:
-            first_message_role = messages[0]['role']
-            if first_message_role == "user":
+            first_message = messages[0]
+            if first_message.role == "user":
                 messages.pop(0)
 
-            while first_message_role != "user":
+            while first_message.role != "user":
                 messages.pop(0)
 
         return messages
