@@ -45,6 +45,10 @@ class ChatCache(ClientCache):
 
         self.set(self.cache_key, processed_value)
 
+    def reset_messages(self):
+        """Reset the messages."""
+        self.set(self.cache_key, [])
+
 
 class ChatManager:
     """Chat manager."""
@@ -53,6 +57,10 @@ class ChatManager:
         """Initialize the chat manager."""
         self.user_name = user_name
         self.chat_cache = ChatCache(user_name)
+
+    def reset_messages(self):
+        """Reset the messages."""
+        self.chat_cache.reset_messages()
 
     @staticmethod
     def get_next_message_id(messages):
