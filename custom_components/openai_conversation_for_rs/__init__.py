@@ -31,7 +31,7 @@ from .const import (
     FIXED_ENDPOINT,
 )
 from .ha_crawler import HaCrawler
-from .message_model import AssistantMessage, SystemMessage, UserMessage
+from .message_model import AssistantMessage, SystemMessage, UserMessage, ToolMessage
 from .prompt_generator import GptHaAssistant, PromptGenerator
 from .prompt_manager import PromptManager
 
@@ -187,7 +187,11 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                     api_call = tool_call.function.arguments
                     _LOGGER.info("api_call: %s", api_call)
 
-                    await self.hass_api_handler.process_api_call(tool_call.function)
+                    tool_call_result: bool = await self.hass_api_handler.process_api_call(tool_call.function)
+                    tool_call_message_content = "Success" if tool_call_result else "Failed"
+                    tool_message = ToolMessage(tool_call_id=tool_call.id, content=tool_call_message_content)
+                    chat_manager.add_message(tool_message)
+
             # TODO manually return response_text
             if "googlecast_domain_flg" in response_text:
                 intent_response = intent.IntentResponse(language=user_input.language)

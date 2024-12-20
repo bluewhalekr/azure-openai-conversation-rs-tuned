@@ -24,9 +24,17 @@ class ChatCache(ClientCache):
         _LOGGER.info("====================================")
         return messages
 
-    def _limit_messages(self, messages):
+    def _limit_messages(self, messages, trigger_limit=20):
         """Limit the number of messages to 20."""
-        return messages[-20:]
+        while len(messages) > trigger_limit:
+            first_message_role = messages[0]['role']
+            if first_message_role == "user":
+                messages.pop(0)
+
+            while first_message_role != "user":
+                messages.pop(0)
+
+        return messages
 
     def set_messages(self, value):
         """Set the messages."""
