@@ -31,7 +31,7 @@ from .const import (
     FIXED_ENDPOINT,
 )
 from .ha_crawler import HaCrawler
-from .message_model import AssistantMessage, SystemMessage, UserMessage, ToolMessage
+from .message_model import AssistantMessage, SystemMessage, ToolMessage, UserMessage
 from .prompt_generator import GptHaAssistant, PromptGenerator
 from .prompt_manager import PromptManager
 
@@ -440,18 +440,16 @@ class HassApiHandler:
 
         # body 데이터를 service_data로 변환
         body = api_call.body
-        trigger = body.get("trigger", {})
-        action = body.get("action", {})
-        condition = body.get("condition", {})
 
         automation_id = f"automation.auto_{str(uuid.uuid4())[:8]}"
+
         # automation.create 서비스에 필요한 데이터 구성
         config = {
             "id": automation_id,
             "alias": automation_alias,
-            "trigger": [trigger],
-            "condition": [condition] if condition else [],
-            "action": [action],
+            "trigger": body.get("trigger"),
+            "condition": body.get("condition"),
+            "action": body.get("action"),
             "mode": "single",
         }
 
