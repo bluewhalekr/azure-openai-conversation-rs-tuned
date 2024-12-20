@@ -5,21 +5,18 @@ import logging
 import traceback
 import uuid
 from collections.abc import Callable
-from datetime import timedelta
 from typing import Any
 
 import aiohttp
 import netifaces
+import yaml
 from homeassistant.components import conversation, mqtt
 from homeassistant.components.automation import DOMAIN as AUTOMATION_DOMAIN
-from homeassistant.components.automation import AutomationEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import intent
 from homeassistant.helpers.condition import async_from_config
-from homeassistant.helpers.entity_component import EntityComponent
-from homeassistant.helpers.script import Script
 from homeassistant.helpers.typing import ConfigType
 from openai import AsyncAzureOpenAI
 
@@ -285,6 +282,26 @@ class HassApiHandler:
 
         return if_action
 
+    def save_automation_to_yaml(self, automation_config):
+        """Save automation to automations.yaml."""
+        yaml_path = self.hass.config.path("automations.yaml")
+
+        try:
+            # 기존 automations.yaml 내용 읽기
+            with open(yaml_path) as file:
+                existing_data = yaml.safe_load(file) or []
+
+            # 새로운 자동화 추가
+            existing_data.append(automation_config)
+
+            # 업데이트된 내용 저장
+            with open(yaml_path, "w") as file:
+                yaml.dump(existing_data, file, default_flow_style=False)
+
+            _LOGGER.info("Automation saved to automations.yaml: %s", automation_config["id"])
+        except Exception as e:
+            _LOGGER.error("Failed to save automation to YAML: %s", e)
+
     async def process_api_call(self, api_call):
         """Process an API call.
 
@@ -318,59 +335,14 @@ class HassApiHandler:
                     _LOGGER.error("Failed to call Home Assistant service: %s", str(err))
                     return False
         if len(parts) >= 4 and parts[2] == "config" and parts[3] == "automation":
-            automation_config = self._convert_automation_call(api_call)
-
-            automation_alias = automation_config["alias"]
-            automation_id = automation_config["id"]
-            trigger_config = automation_config["trigger"]
-            condition_config = automation_config["condition"]
-            action_config = automation_config["action"]
-
-            action_script = Script(
-                self.hass,
-                action_config,
-                f"Automation {automation_id}",
-                AUTOMATION_DOMAIN,
-            )
-            cond_func = await self.create_if_action(condition_config)
-
-            trace_config = {
-                "stored_traces": 5,  # 저장할 trace 수
-                "stored_condition_traces": 5,  # 저장할 condition trace 수
-                "external_logging": False,  # 외부 로깅 비활성화
-            }
-
             try:
-                automation = AutomationEntity(
-                    automation_id=automation_id,
-                    name=automation_alias,
-                    trigger_config=trigger_config,
-                    cond_func=cond_func,
-                    action_script=action_script,
-                    initial_state=True,
-                    variables=None,
-                    trigger_variables=None,
-                    raw_config={
-                        "id": automation_id,
-                        "alias": automation_alias,
-                        "trigger": trigger_config,
-                        "condition": condition_config,
-                        "action": action_config,
-                    },
-                    blueprint_inputs=None,
-                    trace_config=trace_config,
-                )
-
-                # 자동화 컴포넌트 가져오기 또는 생성
-                component = self.hass.data.get(AUTOMATION_DOMAIN)
-                if component is None:
-                    component = EntityComponent(
-                        logger=_LOGGER, domain=AUTOMATION_DOMAIN, hass=self.hass, scan_interval=timedelta(seconds=30)
-                    )
-                    self.hass.data[AUTOMATION_DOMAIN] = component
-
-                # 자동화 등록
-                await component.async_add_entities([automation])
+                automation_config = self._convert_automation_call(api_call)
+                if "id" not in automation_config:
+                    automation_config["id"] = str(uuid.uuid4())
+                # automations.yaml에 저장
+                self.save_automation_to_yaml(automation_config)
+                # 자동화 컴포넌트 재로드
+                await self.hass.services.async_call("automation", "reload")
                 return True
             except Exception as e:
                 _LOGGER.error("Failed to create automation: %s", e)
