@@ -24,9 +24,15 @@ class ChatCache(ClientCache):
         _LOGGER.info("====================================")
         return messages
 
+    def _limit_messages(self, messages):
+        """Limit the number of messages to 20."""
+        return messages[-20:]
+
     def set_messages(self, value):
         """Set the messages."""
-        self.set(self.cache_key, value)
+        processed_value = self._limit_messages(value)
+
+        self.set(self.cache_key, processed_value)
 
 
 class ChatManager:
