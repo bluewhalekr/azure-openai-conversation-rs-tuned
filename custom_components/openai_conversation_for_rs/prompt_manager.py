@@ -16,12 +16,14 @@ HA_STATES_PATH = os.path.join(DATA_PATH, "ha_contexts", "states.json")
 HA_SERVICES_PATH = os.path.join(DATA_PATH, "ha_contexts", "services.json")
 
 
+GLOBAL_CACHE = {}
+
 class ClientCache:
     """Cache Structure for the client."""
 
     def __init__(self, client_id):
         self.client_id = client_id
-        self._cache = {}
+        self._cache = GLOBAL_CACHE.setdefault(client_id, {})
 
     def get(self, key, default=None):
         """Get the value from the cache."""
