@@ -28,12 +28,11 @@ class ChatCache(ClientCache):
     def _limit_messages(self, messages: List[BaseMessage], trigger_limit=20):
         """Limit the number of messages to 20."""
         while len(messages) > trigger_limit:
-            first_message = messages[0]
-            if len(messages) and first_message.role == "user":
+            if len(messages) and messages[0].role == "user":
                 _LOGGER.debug(f"dropping message for limit. role: {messages[0].role}, content: {messages[0].content[:20]}...")
                 messages.pop(0)
 
-            while len(messages) and first_message.role != "user":
+            while len(messages) and messages[0].role != "user":
                 _LOGGER.debug(
                     f"dropping message for limit. role: {messages[0].role}, content: {messages[0].content[:20]}...")
                 messages.pop(0)
