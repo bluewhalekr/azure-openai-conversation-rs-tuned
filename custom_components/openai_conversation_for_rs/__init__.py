@@ -128,6 +128,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
             self.hass.async_create_task(self._publish_speaker_status(speaker_id[-2:], user_input.text))
 
             chat_manager = ChatManager(speaker_id)
+            chat_manager.add_message(UserMessage(content=user_input.text))
 
             # Check to cache, when user_input.text is hitted.
             cached_response = await self.send_cache_request(speaker_id, user_input.text)
@@ -155,12 +156,14 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                 )
                 # 만약 입력단에 || 가 포함되어 있으면 speaker_id가 포함된 것을 간주
 
-                chat_manager.add_message(UserMessage(content=user_input.text))
                 chat_manager.add_message(SystemMessage(**system_datetime_prompt))
-                chat_manager.add_message(SystemMessage(**system_entities_prompt))
-                chat_manager.add_message(SystemMessage(**system_services_prompt))
+                # chat_manager.add_message(SystemMessage(**system_entities_prompt))
+                # chat_manager.add_message(SystemMessage(**system_services_prompt))
 
                 chat_input_messages = chat_manager.get_chat_input()
+                chat_input_messages.append(system_entities_prompt)
+                chat_input_messages.append(system_services_prompt)
+
                 for i in range(len(chat_input_messages)):
                     _LOGGER.info("chat_input_messages-%s: %s", i, chat_input_messages[i])
                 chat_response = await gpt_ha_assistant.chat(chat_input_messages)
