@@ -225,9 +225,10 @@ class GptHaAssistant:
 
         except json.JSONDecodeError as json_err:
             _LOGGER.error("JSON parsing error: %s", str(json_err))
+            _LOGGER.error("Traceback: %s", traceback.format_exc())
             return default_message
 
         except Exception as parse_err:
             _LOGGER.error("Error parsing response: %s", str(parse_err))
-            _LOGGER.error("Traceback: %s", traceback.format_exc())
+
             return default_message
