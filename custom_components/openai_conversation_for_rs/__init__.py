@@ -400,15 +400,17 @@ class HassApiHandler:
             else:
                 return None
 
-            if service == "turn_on" or service == "start":
-                service = "on"
+            if service in ["turn_on", "start"]:
+                status = "on"
             elif service == "turn_off":
-                service = "off"
+                status = "off"
             elif service == "vacuum_stop_and_return" and entity_id is None:
-                service = "off"
+                status = "off"
                 entity_id = "robosceongsogi"
+            else:
+                return None
 
-            data = {"name": entity_id, "status": "on" if service == "turn_on" or service == "start" else "off"}
+            data = {"name": entity_id, "status": status}
             _LOGGER.info("blender request: %s", data)
             async with aiohttp.ClientSession() as session:
                 try:
