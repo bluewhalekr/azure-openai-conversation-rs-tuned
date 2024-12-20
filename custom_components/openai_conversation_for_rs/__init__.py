@@ -152,6 +152,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                     user_pattern_prompt=self.prompt_manager.get_user_pattern_prompt(),
                     tool_prompts=[prompt_generator.get_tool()],
                     client=self.client,
+                    hass=self.hass,
                 )
                 # 만약 입력단에 || 가 포함되어 있으면 speaker_id가 포함된 것을 간주
 

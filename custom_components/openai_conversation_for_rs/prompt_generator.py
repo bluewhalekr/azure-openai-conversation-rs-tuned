@@ -99,6 +99,7 @@ class GptHaAssistant:
         user_pattern_prompt: str,
         tool_prompts: list[dict],
         client,
+        hass,
     ):
         self.init_prompt = init_prompt
         self.ha_automation_script = ha_automation_script
@@ -107,6 +108,17 @@ class GptHaAssistant:
         self.deployment_name = deployment_name
         self.model_input_messages = []
         self.openai_client = client
+        self.token_encoder = None
+        self.hass = hass
+        self.init_async_task()
+
+    def init_async_task(self):
+        """Initialize the async task."""
+        self.hass.async_create_task(self._init_tiktok_token_encoder)
+
+    def _init_tiktok_token_encoder(self):
+        """Initialize the TikTok token encoder."""
+        self.token_encoder = tiktoken.get_encoding("o200k_base")
 
     def add_instructions(self, chat_history: list[dict]):
         """Convert the chat history to JSON data."""
@@ -123,16 +135,15 @@ class GptHaAssistant:
 
     def crop_chat_history(self, chat_history: List[dict]):
         """Crop the chat history to the last 4 messages."""
-        token_encoder = tiktoken.get_encoding("o200k_base")
         instructions_sum = self.init_prompt + self.ha_automation_script + self.user_pattern_prompt
-        instructions_tokens = token_encoder.encode(instructions_sum)
+        instructions_tokens = self.token_encoder.encode(instructions_sum)
 
-        chat_history_tokens = token_encoder.encode(json.dumps(chat_history))
+        chat_history_tokens = self.token_encoder.encode(json.dumps(chat_history))
         while len(instructions_tokens) + len(chat_history_tokens) > 128000:
             for i, message in enumerate(chat_history[::-1], start=1):
                 if message["role"] == "user":
                     chat_history = chat_history[: -(i + 3)]
-            chat_history_tokens = token_encoder.encode(json.dumps(chat_history))
+            chat_history_tokens = self.token_encoder.encode(json.dumps(chat_history))
         return chat_history
 
     async def chat(self, chat_history: list[dict], n=1):
