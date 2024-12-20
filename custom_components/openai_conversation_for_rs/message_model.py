@@ -119,7 +119,7 @@ class AssistantMessage(BaseMessage):
                 tool_call_dict = tool_call.model_dump()
 
                 if to_str_arguments:
-                    arguments = json.dumps(tool_call.function.arguments.dict())
+                    arguments = tool_call.function.arguments.json(ensure_ascii=False)
 
                     tool_call_dict["function"] = {
                         "arguments": arguments,
