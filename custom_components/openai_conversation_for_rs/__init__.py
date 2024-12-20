@@ -157,10 +157,13 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                 # 만약 입력단에 || 가 포함되어 있으면 speaker_id가 포함된 것을 간주
 
                 chat_manager.add_message(SystemMessage(**system_datetime_prompt))
-                chat_manager.add_message(SystemMessage(**system_entities_prompt))
-                chat_manager.add_message(SystemMessage(**system_services_prompt))
+                # chat_manager.add_message(SystemMessage(**system_entities_prompt))
+                # chat_manager.add_message(SystemMessage(**system_services_prompt))
 
                 chat_input_messages = chat_manager.get_chat_input()
+                chat_input_messages.append(system_entities_prompt)
+                chat_input_messages.append(system_services_prompt)
+
                 for i in range(len(chat_input_messages)):
                     _LOGGER.info("chat_input_messages-%s: %s", i, chat_input_messages[i])
                 chat_response = await gpt_ha_assistant.chat(chat_input_messages)
