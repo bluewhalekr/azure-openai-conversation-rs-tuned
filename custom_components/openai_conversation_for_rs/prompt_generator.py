@@ -140,8 +140,8 @@ class GptHaAssistant:
 
         try:
             # _LOGGER.debug("Chat history: %s", chat_history)
-            cropped_chat_history = self.crop_chat_history(chat_history)
-            self.model_input_messages = self.add_instructions(cropped_chat_history)
+            # cropped_chat_history = self.crop_chat_history(chat_history)
+            self.model_input_messages = self.add_instructions(chat_history)
 
             response = await self.openai_client.chat.completions.create(
                 model=self.deployment_name, messages=self.model_input_messages, tools=self.tool_prompts, n=n
