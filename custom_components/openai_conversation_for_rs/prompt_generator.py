@@ -195,8 +195,12 @@ class GptHaAssistant:
                 _LOGGER.error("Unexpected error data type: %s", type(error_data))
                 return default_message
 
-            error_dict = json.loads(error_data)
-            error_info = error_dict.get("error", {})
+            try:
+                error_dict = json.loads(error_data)
+                error_info = error_dict.get("error", {})
+            except Exception as e:
+                _LOGGER.error("Error data: %s", error_data)
+                return default_message
 
             # 기본 오류 정보 로깅
             _LOGGER.error("Azure OpenAI Error: %s", error_info.get("message", "Unknown error"))
