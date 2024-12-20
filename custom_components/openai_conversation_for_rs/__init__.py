@@ -197,6 +197,9 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                     response_text = "요청하신 명령을 수행합니다."
                 intent_response = intent.IntentResponse(language=user_input.language)
                 intent_response.async_set_speech(response_text, extra_data={"type": "gpt"})
+                self.hass.async_create_task(
+                    self._publish_speaker_status(speaker_id[-2:], user_input.text, response_text)
+                )
             return conversation.ConversationResult(response=intent_response, conversation_id=user_input.conversation_id)
 
         except Exception as err:
@@ -210,9 +213,9 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
             )
             return conversation.ConversationResult(response=intent_response, conversation_id=self.entry.entry_id)
 
-    async def _publish_speaker_status(self, speaker_id: str, message: str) -> None:
+    async def _publish_speaker_status(self, speaker_id: str, message: str, response: str = "") -> None:
         """Publish speaker status to MQTT."""
-        payload = {"current": speaker_id, "message": message}
+        payload = {"current": speaker_id, "message": message, "response": response}
 
         # MQTT 메시지 발행
         await mqtt.async_publish(
@@ -385,17 +388,27 @@ class HassApiHandler:
             # service_data에서 entity_id 분리
             service_data = dict(api_call.body)
             entity_id = service_data.pop("entity_id", None)
-            if entity_id is None:
-                return None
-            entity_id = entity_id.split(".")[1]
+
+            if entity_id is not None:
+                entity_id = entity_id.split(".")[1]
+
             path = "/control-light"
             if entity_id in BLENDER_LIGHT_ENTITY:
                 path = "/control-light"
-            elif entity_id in BLENDER_DEVICE_ENTITY:
+            elif entity_id in BLENDER_DEVICE_ENTITY or service == "vacuum_stop_and_return":
                 path = "/control-device"
             else:
                 return None
-            data = {"name": entity_id, "status": "on" if service == "turn_on" else "off"}
+
+            if service == "turn_on" or service == "start":
+                service = "on"
+            elif service == "turn_off":
+                service = "off"
+            elif service == "vacuum_stop_and_return" and entity_id is None:
+                service = "off"
+                entity_id = "robosceongsogi"
+
+            data = {"name": entity_id, "status": "on" if service == "turn_on" or service == "start" else "off"}
             _LOGGER.info("blender request: %s", data)
             async with aiohttp.ClientSession() as session:
                 try:
