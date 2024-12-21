@@ -162,7 +162,12 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                 chat_input_messages.append(system_services_prompt)
 
                 for i in range(len(chat_input_messages)):
-                    _LOGGER.info("chat_input_messages-%s: %s", i, chat_input_messages[i])
+                    chat_input_message = chat_input_messages[i]
+                    if chat_input_message.get("role") == "system":
+                        _LOGGER.info("chat_input_messages-%s: %s", i, f"SYSTEM PROMPT.{chat_input_message.get('name')}")
+                    else:
+                        _LOGGER.info("chat_input_messages-%s: %s", i, chat_input_messages[i])
+
                 chat_response = await gpt_ha_assistant.chat(chat_input_messages)
                 _LOGGER.info("chat_response: %s", chat_response)
 
