@@ -184,7 +184,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
             if assistant_message.content:
                 response_text = assistant_message.content
 
-            chat_manager.add_message(assistant_message)
+            tool_messages = []
             if tool_calls := assistant_message.tool_calls:
                 for tool_call in tool_calls:
                     call_service_count += 1
@@ -195,7 +195,11 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                     tool_call_result: bool = await self.hass_api_handler.process_api_call(tool_call.function)
                     tool_call_message_content = "Success" if tool_call_result else "Failed"
                     tool_message = ToolMessage(tool_call_id=tool_call.id, content=tool_call_message_content)
-                    chat_manager.add_message(tool_message)
+                    tool_messages.append(tool_message)
+
+            chat_manager.add_message(assistant_message)
+            for tool_message in tool_messages:
+                chat_manager.add_message(tool_message)
 
             # TODO manually return response_text
             if "googlecast_domain_flg" in response_text:
