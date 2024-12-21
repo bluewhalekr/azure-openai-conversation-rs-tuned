@@ -125,6 +125,11 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
             self.hass.async_create_task(self._publish_speaker_status(speaker_id[-2:], user_input.text))
 
             chat_manager = ChatManager(speaker_id)
+            if user_input.text == "대화 내역 초기화":
+                chat_manager.reset_messages()
+                intent_response = intent.IntentResponse(language=user_input.language)
+                conversation.ConversationResult(response=intent_response, conversation_id=user_input.conversation_id)
+
             chat_manager.add_message(UserMessage(content=user_input.text))
 
             # Check to cache, when user_input.text is hitted.
