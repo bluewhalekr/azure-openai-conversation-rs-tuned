@@ -198,7 +198,7 @@ class GptHaAssistant:
             try:
                 error_dict = json.loads(error_data)
                 error_info = error_dict.get("error", {})
-            except Exception as e:
+            except Exception:
                 _LOGGER.error("Error data: %s", error_data)
                 return default_message
 
@@ -232,7 +232,7 @@ class GptHaAssistant:
             _LOGGER.error("Traceback: %s", traceback.format_exc())
             return default_message
 
-        except Exception as parse_err:
-            _LOGGER.error("Error parsing response: %s", str(parse_err))
-
+        except Exception as e:
+            _LOGGER.error("Error response: %s", str(e))
+            _LOGGER.error("Traceback: %s", traceback.format_exc())
             return default_message
