@@ -71,7 +71,7 @@ class SystemMessage(BaseMessage):
 class ApiCall(BaseModel):
     """API call model"""
 
-    method: Literal["get", "post"]
+    method: Literal["get", "post", "delete"]
     endpoint: str
     body: dict
 
