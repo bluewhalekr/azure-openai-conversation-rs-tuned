@@ -80,7 +80,7 @@ class PromptGenerator:
                         "endpoint": {"type": "string", "description": "The endpoint of the Home Assistant API"},
                         "body": {"type": "object", "description": "The body of the Home Assistant API"},
                     },
-                    "required": ["method", "endpoint", "body"],
+                    "required": ["method", "endpoint"],
                     "additionalProperties": False,
                 },
                 "strict": False,
