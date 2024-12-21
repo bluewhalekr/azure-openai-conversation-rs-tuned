@@ -73,7 +73,7 @@ class ApiCall(BaseModel):
 
     method: Literal["get", "post", "delete"]
     endpoint: str
-    body: dict
+    body: dict = {}
 
 
 class ApiCallFunction(Function):
