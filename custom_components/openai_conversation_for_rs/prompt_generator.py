@@ -187,7 +187,7 @@ class GptHaAssistant:
 
         """
         default_message = "OpenAI가 명령을 이해하지 못했습니다. 다른 표현으로 다시 시도해주세요."
-
+        error_data = None
         try:
             # 오류 데이터 파싱
             error_data = err.args[0]
@@ -232,7 +232,7 @@ class GptHaAssistant:
             _LOGGER.error("Traceback: %s", traceback.format_exc())
             return default_message
 
-        except Exception as e:
-            _LOGGER.error("Error response: %s", str(e))
+        except Exception:
             _LOGGER.error("Traceback: %s", traceback.format_exc())
+            _LOGGER.error("Error response: %s", error_data)
             return default_message
