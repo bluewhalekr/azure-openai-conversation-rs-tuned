@@ -306,6 +306,7 @@ class HassApiHandler:
 
     async def delete_automation_to_yaml(self, automation_config):
         """Delete automation from automations.yaml."""
+        _LOGGER.info("delete_automation_to_yaml %s", automation_config)
         yaml_path = self.hass.config.path("automations.yaml")
 
         try:
@@ -316,7 +317,8 @@ class HassApiHandler:
 
             # 삭제할 자동화 찾기
             for idx, automation in enumerate(existing_data):
-                if automation.get("id") == automation_config["id"]:
+                _LOGGER.info("registered automation %s", automation.get("alias"))
+                if automation.get("alias") == automation_config["alias"]:
                     existing_data.pop(idx)
                     break
 
@@ -330,6 +332,7 @@ class HassApiHandler:
 
     async def create_automation_to_yaml(self, automation_config):
         """Save automation to automations.yaml."""
+        _LOGGER.info("create_automation_to_yaml: %s", automation_config)
         yaml_path = self.hass.config.path("automations.yaml")
 
         try:
@@ -366,6 +369,7 @@ class HassApiHandler:
         parts = api_call.endpoint.split("/")
 
         if len(parts) >= 5 and parts[2] == "services":
+            _LOGGER.info("process_api_call:: Services!!! ")
             service_params = self._convert_service_call(api_call)
             if service_params:
                 # Home Assistant 서비스 호출 실행
@@ -382,14 +386,16 @@ class HassApiHandler:
                     _LOGGER.error("Failed to call Home Assistant service: %s", str(err))
                     return False
         if len(parts) >= 4 and parts[2] == "config" and parts[3] == "automation":
+            _LOGGER.info("process_api_call:: Automation!!! ")
             try:
                 automation_config = self._convert_automation_call(api_call)
                 if not self._validate_automation_config(automation_config):
                     return False
 
-                operations = {"create": self.create_automation_to_yaml, "delete": self.delete_automation_to_yaml}
+                operations = {"post": self.create_automation_to_yaml, "delete": self.delete_automation_to_yaml}
 
                 operation = operations.get(automation_config["method"])
+                del automation_config["method"]
                 if operation:
                     await operation(automation_config)
                     await self._reload_automation()
@@ -450,6 +456,8 @@ class HassApiHandler:
         handlers = {"post": self._create_automation_config, "delete": self._delete_automation_config}
 
         method = api_call.method.lower()
+        _LOGGER.error("_convert_automation_call method: %s", method)
+
         handler = handlers.get(method)
 
         if not handler:
@@ -480,4 +488,4 @@ class HassApiHandler:
 
     def _delete_automation_config(self, api_call):
         """Create automation configuration from DELETE request."""
-        return {"method": "delete", "id": self._extract_alias(api_call.endpoint)}
+        return {"method": "delete", "alias": self._extract_alias(api_call.endpoint)}
