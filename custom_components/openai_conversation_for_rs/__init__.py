@@ -117,6 +117,9 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                 if len(user_input_text) == 2:
                     user_input.text = user_input_text[1]
                     speaker_id = user_input_text[0]
+                # Remove trailing period
+                if user_input.text.endswith("."):
+                    user_input.text = user_input.text[:-1]
 
             _LOGGER.info("speaker_id: %s", speaker_id)
             _LOGGER.info("input_text: %s", user_input.text)
