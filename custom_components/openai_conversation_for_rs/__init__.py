@@ -7,6 +7,7 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
+import aiofiles
 import aiohttp
 import netifaces
 import yaml
@@ -209,14 +210,14 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
             for tool_message in tool_messages:
                 chat_manager.add_message(tool_message)
 
+            intent_response = intent.IntentResponse(language=user_input.language)
+
             # TODO manually return response_text
             if "googlecast_domain_flg" in response_text:
-                intent_response = intent.IntentResponse(language=user_input.language)
                 intent_response.async_set_speech(speech=user_input.text, extra_data={"type": "chrome"})
             else:
-                if call_service_count > 1:
+                if call_service_count > 1 and not response_text:
                     response_text = "요청하신 명령을 수행합니다."
-                intent_response = intent.IntentResponse(language=user_input.language)
                 intent_response.async_set_speech(response_text, extra_data={"type": "gpt"})
                 self.hass.async_create_task(
                     self._publish_speaker_status(speaker_id[-2:], user_input.text, response_text)
@@ -303,21 +304,46 @@ class HassApiHandler:
 
         return if_action
 
-    def save_automation_to_yaml(self, automation_config):
+    async def delete_automation_to_yaml(self, automation_config):
+        """Delete automation from automations.yaml."""
+        yaml_path = self.hass.config.path("automations.yaml")
+
+        try:
+            # 기존 automations.yaml 내용 읽기
+            async with aiofiles.open(yaml_path) as file:
+                content = await file.read()
+                existing_data = yaml.safe_load(content) or []
+
+            # 삭제할 자동화 찾기
+            for idx, automation in enumerate(existing_data):
+                if automation.get("id") == automation_config["id"]:
+                    existing_data.pop(idx)
+                    break
+
+            # 업데이트된 내용 저장
+            async with aiofiles.open(yaml_path, "w") as file:
+                await file.write(yaml.dump(existing_data, default_flow_style=False))
+
+            _LOGGER.info("Automation deleted from automations.yaml: %s", automation_config["id"])
+        except Exception as e:
+            _LOGGER.error("Failed to delete automation from YAML: %s", e)
+
+    async def create_automation_to_yaml(self, automation_config):
         """Save automation to automations.yaml."""
         yaml_path = self.hass.config.path("automations.yaml")
 
         try:
             # 기존 automations.yaml 내용 읽기
-            with open(yaml_path) as file:
-                existing_data = yaml.safe_load(file) or []
+            async with aiofiles.open(yaml_path) as file:
+                content = await file.read()
+                existing_data = yaml.safe_load(content) or []
 
             # 새로운 자동화 추가
             existing_data.append(automation_config)
 
             # 업데이트된 내용 저장
-            with open(yaml_path, "w") as file:
-                yaml.dump(existing_data, file, default_flow_style=False)
+            async with aiofiles.open(yaml_path, "w") as file:
+                await file.write(yaml.dump(existing_data, default_flow_style=False))
 
             _LOGGER.info("Automation saved to automations.yaml: %s", automation_config["id"])
         except Exception as e:
@@ -358,17 +384,32 @@ class HassApiHandler:
         if len(parts) >= 4 and parts[2] == "config" and parts[3] == "automation":
             try:
                 automation_config = self._convert_automation_call(api_call)
-                if "id" not in automation_config:
-                    automation_config["id"] = str(uuid.uuid4())
-                # automations.yaml에 저장
-                self.save_automation_to_yaml(automation_config)
-                # 자동화 컴포넌트 재로드
-                await self.hass.services.async_call("automation", "reload")
-                return True
+                if not self._validate_automation_config(automation_config):
+                    return False
+
+                operations = {"create": self.create_automation_to_yaml, "delete": self.delete_automation_to_yaml}
+
+                operation = operations.get(automation_config["method"])
+                if operation:
+                    await operation(automation_config)
+                    await self._reload_automation()
+                    return True
             except Exception as e:
                 _LOGGER.error("Failed to create automation: %s", e)
                 return False
         return False
+
+    async def _reload_automation(self):
+        """Reload automation component."""
+        await self.hass.services.async_call("automation", "reload")
+
+    def _validate_automation_config(self, config):
+        """Validate automation configuration."""
+        if not config:
+            return False
+        if "id" not in config:
+            config["id"] = str(uuid.uuid4())
+        return True
 
     def _convert_service_call(self, api_call):
         """서비스 API 호출 변환."""
@@ -376,54 +417,6 @@ class HassApiHandler:
         domain = parts[3]
         service = parts[4]
 
-        async def _synch_blender_bridge():
-            """블렌더 브릿지 동기화."""
-            parts = api_call.endpoint.split("/")
-            service = parts[4]
-
-            # service_data에서 entity_id 분리
-            service_data = dict(api_call.body)
-            entity_id = service_data.pop("entity_id", None)
-
-            if entity_id is not None:
-                entity_id = entity_id.split(".")[1]
-
-            path = "/control-light"
-            if entity_id in BLENDER_LIGHT_ENTITY:
-                path = "/control-light"
-            elif entity_id in BLENDER_DEVICE_ENTITY or service == "vacuum_stop_and_return":
-                path = "/control-device"
-            else:
-                return None
-
-            if service in ["turn_on", "start"]:
-                status = "on"
-            elif service == "turn_off":
-                status = "off"
-            elif service == "vacuum_stop_and_return" and entity_id is None:
-                status = "off"
-                entity_id = "robosceongsogi"
-            else:
-                return None
-
-            data = {"name": entity_id, "status": status}
-            _LOGGER.info("blender request: %s", data)
-            async with aiohttp.ClientSession() as session:
-                try:
-                    async with session.post(BLENDER_BRIDGE_ENDPOINT + path, json=data) as response:
-                        if response.status == 200:
-                            result = await response.json()
-                            _LOGGER.info("Response: %s", result)
-                            return result
-                        _LOGGER.info("Failed with status code: %s", response.status)
-                        error_text = await response.text()
-                        _LOGGER.info("Error response: %s", error_text)
-                        return None
-                except Exception:
-                    _LOGGER.error(traceback.format_exc())
-                    return None
-
-        self.hass.async_create_task(_synch_blender_bridge())
         # service_data에서 entity_id 분리
         service_data = dict(api_call.body)
         entity_id = service_data.pop("entity_id", None)
@@ -441,22 +434,42 @@ class HassApiHandler:
         return result
 
     def _convert_automation_call(self, api_call):
-        """api_call 데이터를 Home Assistant 서비스 호출 데이터로 변환합니다."""
-        # 입력 데이터 검증
-        if api_call.method.lower() != "post":
+        """api_call 데이터를 Home Assistant 서비스 호출 데이터로 변환합니다.
+
+        자동화 추가 POST /config/automation/create
+        자동화 삭제 DELETE /config/automation/delete/{automation_id}
+        이런 형태로 오는 것을 처리합니다.
+
+        Args:
+            api_call: API 호출 객체
+
+        Returns:
+            dict: 서비스 호출 데이터
+
+        """
+        handlers = {"post": self._create_automation_config, "delete": self._delete_automation_config}
+
+        method = api_call.method.lower()
+        handler = handlers.get(method)
+
+        if not handler:
+            _LOGGER.error("Unsupported method: %s", api_call.method)
             return None
 
-        # endpoint에서 automation ID 추출
-        endpoint = api_call.endpoint
-        automation_alias = endpoint.split("/")[-1]
+        return handler(api_call)
 
-        # body 데이터를 service_data로 변환
+    def _extract_alias(self, endpoint):
+        """Extract automation alias from endpoint."""
+        return endpoint.split("/")[-1]
+
+    def _create_automation_config(self, api_call):
+        """Create automation configuration from POST request."""
+        automation_alias = self._extract_alias(api_call.endpoint)
+        automation_id = f"automation.auto_{str(uuid.uuid4())[:8]}"
         body = api_call.body
 
-        automation_id = f"automation.auto_{str(uuid.uuid4())[:8]}"
-
-        # automation.create 서비스에 필요한 데이터 구성
-        config = {
+        return {
+            "method": "post",
             "id": automation_id,
             "alias": automation_alias,
             "trigger": body.get("trigger"),
@@ -465,4 +478,6 @@ class HassApiHandler:
             "mode": "single",
         }
 
-        return config
+    def _delete_automation_config(self, api_call):
+        """Create automation configuration from DELETE request."""
+        return {"method": "delete", "id": self._extract_alias(api_call.endpoint)}
