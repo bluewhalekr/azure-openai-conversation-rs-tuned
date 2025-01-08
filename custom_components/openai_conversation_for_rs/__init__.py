@@ -213,7 +213,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
             intent_response = intent.IntentResponse(language=user_input.language)
 
             # TODO manually return response_text
-            if "googlecast_domain_flg" in response_text:
+            if "googlecast_domain_flg" in response_text or "googlecast_domain_flag" in response_text:
                 intent_response.async_set_speech(speech=user_input.text, extra_data={"type": "chrome"})
             else:
                 if call_service_count > 1 and not response_text:
