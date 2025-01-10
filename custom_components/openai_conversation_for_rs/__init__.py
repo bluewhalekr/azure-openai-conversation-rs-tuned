@@ -288,9 +288,10 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
 
         """
         headers = {"x-functions-key": self.entry.data[CONF_API_KEY]}
-        _LOGGER.info("User-pattern request: %s", speaker_id)
+
         quoted_speaker_id = speaker_id.replace(":", "%3A").upper()
-        request_url = f"{PATTERN_ENDPOINT}/api/v1/user-patterns?mac_address={quoted_speaker_id}"
+        request_url = f"{PATTERN_ENDPOINT}?mac_address={quoted_speaker_id}"
+        _LOGGER.info("User-pattern request: %s", request_url)
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.get(request_url, headers=headers) as response:
@@ -298,6 +299,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                         result = await response.json()
                         user_patterns = result.get("user_patterns", [])
                         speaker_patterns = [pattern["pattern_description"] for pattern in user_patterns]
+                        _LOGGER.info("%s patterns: %s", speaker_id, speaker_patterns)
                         return speaker_patterns
                     _LOGGER.info("Failed with status code: %s", response.status)
                     error_text = await response.text()
