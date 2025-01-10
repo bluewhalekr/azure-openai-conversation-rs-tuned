@@ -144,7 +144,11 @@ class GptHaAssistant:
             self.model_input_messages = self.add_instructions(chat_history)
 
             response = await self.openai_client.chat.completions.create(
-                model=self.deployment_name, messages=self.model_input_messages, tools=self.tool_prompts, n=n
+                model=self.deployment_name,
+                messages=self.model_input_messages,
+                tools=self.tool_prompts,
+                n=n,
+                seed=42
             )
 
         except openai.BadRequestError as err:
