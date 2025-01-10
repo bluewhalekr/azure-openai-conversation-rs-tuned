@@ -155,7 +155,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
 
                 user_pattern_prompt = self.prompt_manager.get_user_pattern_prompt()
                 demo_user_pattern_prompt = self.prompt_manager.get_user_pattern_demo()
-                user_pattern = "\n ".join(f"- {speaker_patterns}") if speaker_patterns else demo_user_pattern_prompt
+                user_pattern = "".join(f"\n- {speaker_patterns}") if speaker_patterns else demo_user_pattern_prompt
                 user_pattern_prompt = user_pattern_prompt.replace("[User Patterns]", user_pattern)
 
                 gpt_ha_assistant = GptHaAssistant(
