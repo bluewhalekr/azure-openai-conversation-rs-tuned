@@ -135,7 +135,7 @@ class GptHaAssistant:
             chat_history_tokens = token_encoder.encode(json.dumps(chat_history))
         return chat_history
 
-    async def chat(self, chat_history: list[dict], n=1, temperature=0.5):
+    async def chat(self, chat_history: list[dict], n=1):
         """Chat with the GPT-based Home Assistant."""
 
         try:
@@ -148,7 +148,7 @@ class GptHaAssistant:
                 messages=self.model_input_messages,
                 tools=self.tool_prompts,
                 n=n,
-                temperature=temperature
+                seed=42
             )
 
         except openai.BadRequestError as err:
