@@ -1,5 +1,6 @@
 """The Azure OpenAI GPT conversation RS-Tuned integration."""
 
+import asyncio
 import json
 import logging
 import traceback
@@ -23,13 +24,11 @@ from openai import AsyncAzureOpenAI
 
 from .chat_manager import ChatManager
 from .const import (
-    BLENDER_BRIDGE_ENDPOINT,
-    BLENDER_DEVICE_ENTITY,
-    BLENDER_LIGHT_ENTITY,
     CACHE_ENDPOINT,
     CONF_DEPLOYMENT_NAME,
     DOMAIN,
     FIXED_ENDPOINT,
+    PATTERN_ENDPOINT,
 )
 from .ha_crawler import HaCrawler
 from .message_model import AssistantMessage, SystemMessage, ToolMessage, UserMessage
@@ -88,7 +87,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
         context += "Available Devices:\n"
         for entity in ha_states.get("entities", []):
             area_name = (entity.get("area") or {}).get("name", "Unknown Area")
-            context += f"- {entity['name']} ({entity['entity_id']}) in {area_name}\n" f"  State: {entity['state']}\n"
+            context += f"- {entity['name']} ({entity['entity_id']}) in {area_name}\n  State: {entity['state']}\n"
 
         return context
 
@@ -137,7 +136,9 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
             chat_manager.add_message(UserMessage(content=user_input.text))
 
             # Check to cache, when user_input.text is hitted.
-            cached_response = await self.send_cache_request(speaker_id, user_input.text)
+            cached_response, speaker_patterns = await asyncio.gather(
+                self.send_cache_request(speaker_id, user_input.text), self.send_pattern_request(SYSTEM_MAC_ADDRESS)
+            )
             if cached_response:
                 _LOGGER.info("cached_response: %s", cached_response)
                 if not cached_response.get("role"):  # role은 필수 필드
@@ -152,15 +153,19 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                 system_entities_prompt = prompt_generator.get_entities_system_prompt()
                 system_services_prompt = prompt_generator.get_services_system_prompt()
 
+                user_pattern_prompt = self.prompt_manager.get_user_pattern_prompt()
+                demo_user_pattern_prompt = self.prompt_manager.get_user_pattern_demo()
+                user_pattern = "\n ".join(f"- {speaker_patterns}") if speaker_patterns else demo_user_pattern_prompt
+                user_pattern_prompt = user_pattern_prompt.replace("[User Patterns]", user_pattern)
+
                 gpt_ha_assistant = GptHaAssistant(
                     deployment_name=self.deployment_name,
                     init_prompt=self.prompt_manager.get_init_prompt(),
                     ha_automation_script=self.prompt_manager.get_ha_automation_script(),
-                    user_pattern_prompt=self.prompt_manager.get_user_pattern_prompt(),
+                    user_pattern_prompt=user_pattern_prompt,
                     tool_prompts=[prompt_generator.get_tool()],
                     client=self.client,
                 )
-                # 만약 입력단에 || 가 포함되어 있으면 speaker_id가 포함된 것을 간주
 
                 chat_manager.add_message(SystemMessage(**system_datetime_prompt))
                 # chat_manager.add_message(SystemMessage(**system_entities_prompt))
@@ -268,10 +273,38 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                     _LOGGER.info("Failed with status code: %s", response.status)
                     error_text = await response.text()
                     _LOGGER.info("Error response: %s", error_text)
-                    return None
             except Exception:
                 _LOGGER.error(traceback.format_exc())
-                return None
+            return None
+
+    async def send_pattern_request(self, speaker_id: str) -> list[str]:
+        """Get user-pattern request to command-crawler server.
+
+        Args:
+            speaker_id: speaker_id is consist of mac address and user_id
+
+        Returns:
+            list[str]: pattern descriptions
+
+        """
+        headers = {"x-functions-key": self.entry.data[CONF_API_KEY]}
+        _LOGGER.info("User-pattern request: %s", speaker_id)
+        quoted_speaker_id = speaker_id.replace(":", "%3A").upper()
+        request_url = f"{PATTERN_ENDPOINT}/api/v1/user-patterns?mac_address={quoted_speaker_id}"
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(request_url, headers=headers) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        user_patterns = result.get("user_patterns", [])
+                        speaker_patterns = [pattern["pattern_description"] for pattern in user_patterns]
+                        return speaker_patterns
+                    _LOGGER.info("Failed with status code: %s", response.status)
+                    error_text = await response.text()
+                    _LOGGER.info("Error response: %s", error_text)
+            except Exception:
+                _LOGGER.error(traceback.format_exc())
+            return []
 
 
 class HassApiHandler:
