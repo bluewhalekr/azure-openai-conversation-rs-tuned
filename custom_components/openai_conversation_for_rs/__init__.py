@@ -137,7 +137,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
 
             # Check to cache, when user_input.text is hitted.
             cached_response, speaker_patterns = await asyncio.gather(
-                self.send_cache_request(speaker_id, user_input.text), self.send_pattern_request(speaker_id)
+                self.send_cache_request(speaker_id, user_input.text), self.send_pattern_request(SYSTEM_MAC_ADDRESS)
             )
             if cached_response:
                 _LOGGER.info("cached_response: %s", cached_response)
