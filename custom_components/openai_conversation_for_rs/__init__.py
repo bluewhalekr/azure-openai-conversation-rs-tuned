@@ -145,9 +145,10 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                 _LOGGER.info("cached_response: %s", cached_response)
                 if not cached_response.get("role"):  # role은 필수 필드
                     raise RuntimeError("Missing required 'role' field in cached response Data")
+
                 if REGISTER_CACHE_WORD in cached_response.get("content", ""):
                     # 캐시 등록 요청인 경우
-                    _LOGGER.info(chat_manager.get_messages()[-3:])
+                    _LOGGER.info(chat_manager.get_messages()[-5:-1])
                     last_messages = chat_manager.get_messages()[-5:-1]
                     content = ""
                     tool_calls = []
@@ -159,9 +160,13 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                         if isinstance(last_message, UserMessage):
                             command_text = last_message.content
                             break
-                    _LOGGER.info("%s: %s, tool_calls: %s", command_text, content, tool_calls)
-                    await self.send_register_cache_request(speaker_id, user_input.text)
-                    cached_response.content = f"{command_text} 를 캐쉬로 등록하였습니다."
+                    if command_text:
+                        _LOGGER.info("%s: %s, tool_calls: %s", command_text, content, tool_calls)
+                        cached_response["content"] = f"{command_text} 를 캐쉬로 등록하였습니다"
+                    else:
+                        cached_response["content"] = "이전 제어 명령어를 찾을 수 없습니다"
+
+                    await self.send_register_cache_request(speaker_id, content, tool_calls, command_text)
 
                 assistant_message = AssistantMessage(**cached_response)
 
