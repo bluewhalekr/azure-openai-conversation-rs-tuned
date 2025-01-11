@@ -161,7 +161,9 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                             command_text = last_message.content
                             break
                     if command_text:
-                        _LOGGER.info("%s: %s, tool_calls: %s", command_text, content, tool_calls)
+                        _LOGGER.info(
+                            "%s: %s, tool_calls: %s", command_text, content, [call.to_dict() for call in tool_calls]
+                        )
                         cached_response["content"] = f"{command_text} 를 캐쉬로 등록하였습니다"
                     else:
                         cached_response["content"] = "이전 제어 명령어를 찾을 수 없습니다"
@@ -277,7 +279,7 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
             self.hass, topic="home/speaker/status", payload=json.dumps(payload), qos=0, retain=False
         )
 
-    async def send_register_cache_request(self, speaker_id: str, previous_command):
+    async def send_register_cache_request(self, speaker_id: str, content, tool_calls, command_text):
         """Send cache request to the cache server."""
         pass
 
