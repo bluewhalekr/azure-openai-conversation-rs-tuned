@@ -1,11 +1,16 @@
 """User Pattern Prompt"""
 
-USER_PATTERNS_PROMPT = """
-# User Usage Patterns
-다음은 분석된 사용자의 사용 패턴입니다. 이를 기반으로 사용자에게 어떤 작업을 자동화할 것을 권장할 수 있습니다. ('자동화'와 '패턴' 단어를 헷갈리지 마세요)
+USER_USAGE_PATTERN_DEMO = """
 - 주중에 오전 7시마다 공기청정기를 켜는 패턴있음
 - 매주 월요일마다 로봇 청소기 이용한 청소를 하는 패턴있음
 - 주중 오후 7시 30분 마다 거실 조명을 켜는 패턴있음
+- 매일 저녁 10시 마다 거실 모든 조명을 끄는 패턴있음
+"""
+
+USER_PATTERNS_PROMPT = """
+# User Usage Patterns
+다음은 분석된 사용자의 사용 패턴입니다. 이를 기반으로 사용자에게 어떤 작업을 자동화할 것을 권장할 수 있습니다. ('자동화'와 '패턴' 단어를 헷갈리지 마세요)
+[User Patterns]
 
 # Rules for User Pattern Prompt
 - 만약 사용자가 "공기청정기 알아서 자동화 해줘" 라고 요청한다면, 'User Usage Patterns'에 관련 내용이 있을 때, "~~~ 패턴이 있습니다. 자동화를 도와드릴까요?" 라고 물어보는 것이 좋습니다.
