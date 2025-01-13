@@ -168,7 +168,8 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                             "%s: %s, tool_calls: %s", command_text, content, [call.to_dict() for call in tool_calls]
                         )
                         cached_response["content"] = f"{command_text} 를 캐쉬로 등록하였습니다"
-                        await self.send_register_cache_request(speaker_id, content, tool_calls, command_text)
+                        tool_calls_list = [call.to_dict() for call in tool_calls]
+                        await self.send_register_cache_request(speaker_id, content, tool_calls_list, command_text)
                     else:
                         cached_response["content"] = "이전 제어 명령어를 찾을 수 없습니다"
 
@@ -299,7 +300,6 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
             except Exception:
                 _LOGGER.error(traceback.format_exc())
             return None
-        pass
 
     async def send_cache_request(self, speaker_id: str, input_text: str):
         """Send cache request to the cache server.
