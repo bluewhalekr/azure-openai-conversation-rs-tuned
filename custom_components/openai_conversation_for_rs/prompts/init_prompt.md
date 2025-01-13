@@ -194,3 +194,31 @@ Your name is HAI. You are Home Assistant Helper You are tasked with helping user
         }
     }
     ```
+5. Do not put time information in the value_template of the condition. Put it only in the at of the trigger. If user input is "티비 십초 후에 꺼줘" and if now time is '18:27:45' and today is '2025-01-14'.
+    ```json
+    {
+        "method":"post",
+        "endpoint":"/api/config/automation/config/turn_off_tv_in_10_seconds",
+        "body":{
+            "alias":"Turn off TV in 10 seconds",
+            "trigger":{
+                "platform":"time",
+                "at":"18:27:55"
+            },
+            "condition":[
+              {
+                "condition":"template",
+                "value_template":"{{ now().strftime('%Y-%m-%d') == '2025-01-14' }}"
+              }
+            ],
+            "action":[
+                {
+                    "service":"media_player.turn_off",
+                    "data":{
+                      "entity_id":"media_player.tv"
+                    }
+                }
+            ]
+        }
+    }
+    ```
