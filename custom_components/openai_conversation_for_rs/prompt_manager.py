@@ -5,7 +5,7 @@ import os
 
 from .const import DOMAIN
 from .prompts.init_prompt import INIT_PROMPT
-from .prompts.user_pattern_prompt import USER_PATTERNS_PROMPT
+from .prompts.user_pattern_prompt import USER_PATTERNS_PROMPT, USER_USAGE_PATTERN_DEMO
 
 file_path = os.path.dirname(__file__)
 INIT_PROMPT_PATH = os.path.join(os.path.dirname(file_path), DOMAIN, "prompts", "init_prompt.md")
@@ -17,6 +17,7 @@ HA_SERVICES_PATH = os.path.join(DATA_PATH, "ha_contexts", "services.json")
 
 
 GLOBAL_CACHE = {}
+
 
 class ClientCache:
     """Cache Structure for the client."""
@@ -75,6 +76,10 @@ class PromptManager:
     def get_ha_automation_script(self):
         """Get the Home Assistant automation script."""
         return self.reset_ha_automation_script()
+
+    def get_user_pattern_demo(self):
+        """Get demot prompt."""
+        return USER_USAGE_PATTERN_DEMO
 
     def get_user_pattern_prompt(self):
         """Get the last prompt."""
