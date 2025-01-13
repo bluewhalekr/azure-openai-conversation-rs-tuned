@@ -90,13 +90,56 @@ class HaCrawler:
 
     def filter_states(self, states: dict) -> dict:
         """Filter the Home Assistant states."""
-        to_filter_domain = ["update", "tts"]
+        to_filter_domain = [
+            "update",
+            "tts",
+            "conversation",
+            "person",
+            "zone",
+            "sun",
+            "todo",
+            "binary_sensor",
+        ]
         to_filter_entity_id = [
             "binary_sensor.rpi_power_status",
             "device_tracker.sm_s926n",
             "sensor.sm_s926n_battery_level",
             "sensor.sm_s926n_battery_state",
             "sensor.sm_s926n_charger_type",
+            "script.script",
+            "sensor.sun_next_noon",
+            "sensor.sun_next_rising",
+            "sensor.sun_next_setting",
+            "sensor.speaker_status",
+            "sensor.sun_next_dusk",
+            "sensor.sun_next_midnight",
+            "sensor.sun_next_dawn",
+            "number.geosildeung_smooth_on",
+            "number.geosildeung_smooth_off",
+            "select.geosildeung_light_preset",
+            "sensor.geosildeung_signal_level",
+            "switch.geosildeung_auto_update_enabled",
+            "number.cimsil_deung_smooth_on",
+            "number.cimsil_deung_smooth_off",
+            "select.cimsil_deung_light_preset",
+            "sensor.cimsil_deung_signal_level",
+            "switch.cimsil_deung_auto_update_enabled",
+            "number.geosil_teibeul_seutaendeu_deung_smooth_on",
+            "number.geosil_teibeul_seutaendeu_deung_smooth_off",
+            "select.geosil_teibeul_seutaendeu_deung_light_preset",
+            "sensor.geosil_teibeul_seutaendeu_deung_signal_level",
+            "switch.geosil_teibeul_seutaendeu_deung_auto_update_enabled",
+            "number.hwajangsil_deung_smooth_on",
+            "number.hwajangsil_deung_smooth_off",
+            "select.hwajangsil_deung_light_preset",
+            "sensor.hwajangsil_deung_signal_level",
+            "switch.hwajangsil_deung_auto_update_enabled",
+            "sensor.robosceongsogi_sensor_dirty_left",
+            "sensor.robosceongsogi_filter_left",
+            "sensor.robosceongsogi_side_brush_left",
+            "sensor.robosceongsogi_main_brush_left",
+            "sensor.robosceongsogi_last_clean_area",
+            "sensor.robosceongsogi_current_clean_area",
         ]
 
         filtered_entities = []
@@ -145,6 +188,12 @@ class HaCrawler:
             "device_tracker",
             "number",
             "select",
+            "mqtt",
+            "weather",
+            "timer",
+            "openai_stt_rs",
+            "schedule",
+            "todo",
         ]
 
         return [service for service in services if service.get("domain") not in to_filter_domain]
