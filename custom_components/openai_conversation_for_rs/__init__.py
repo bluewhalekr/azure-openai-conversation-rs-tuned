@@ -30,6 +30,7 @@ from .const import (
     FIXED_ENDPOINT,
     INIT_CONVERSATION_WORD,
     PATTERN_ENDPOINT,
+    REGISTER_CACHE_ENDPOINT,
     REGISTER_CACHE_WORD,
 )
 from .ha_crawler import HaCrawler
@@ -147,17 +148,19 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                     raise RuntimeError("Missing required 'role' field in cached response Data")
 
                 if REGISTER_CACHE_WORD in cached_response.get("content", ""):
-                    # 캐시 등록 요청인 경우
+                    # 캐시 등록 요청인 경우, 최근 5개의 메시지를 확인하여 AssistantMessage/UserMessage의 pair를 찾아야함.
                     _LOGGER.info(chat_manager.get_messages()[-5:-1])
                     last_messages = chat_manager.get_messages()[-5:-1]
                     content = ""
                     tool_calls = []
                     command_text = ""
+                    found_asisst = False
                     for last_message in reversed(last_messages):
                         if isinstance(last_message, AssistantMessage):
                             content = last_message.content
                             tool_calls = last_message.tool_calls
-                        if isinstance(last_message, UserMessage):
+                            found_asisst = True
+                        if isinstance(last_message, UserMessage) and found_asisst:
                             command_text = last_message.content
                             break
                     if command_text:
@@ -165,10 +168,9 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
                             "%s: %s, tool_calls: %s", command_text, content, [call.to_dict() for call in tool_calls]
                         )
                         cached_response["content"] = f"{command_text} 를 캐쉬로 등록하였습니다"
+                        await self.send_register_cache_request(speaker_id, content, tool_calls, command_text)
                     else:
                         cached_response["content"] = "이전 제어 명령어를 찾을 수 없습니다"
-
-                    await self.send_register_cache_request(speaker_id, content, tool_calls, command_text)
 
                 assistant_message = AssistantMessage(**cached_response)
 
@@ -281,6 +283,22 @@ class AzureOpenAIAgent(conversation.AbstractConversationAgent):
 
     async def send_register_cache_request(self, speaker_id: str, content, tool_calls, command_text):
         """Send cache request to the cache server."""
+        headers = {"x-functions-key": self.entry.data[CONF_API_KEY], "Content-Type": "application/json"}
+        data = {"speaker_id": speaker_id, "content": content, "tool_calls": tool_calls, "command_text": command_text}
+        _LOGGER.info("Cache request: %s", data)
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.post(REGISTER_CACHE_ENDPOINT, json=data, headers=headers) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        _LOGGER.info("Response: %s", result)
+                        return result
+                    _LOGGER.info("Failed with status code: %s", response.status)
+                    error_text = await response.text()
+                    _LOGGER.info("Error response: %s", error_text)
+            except Exception:
+                _LOGGER.error(traceback.format_exc())
+            return None
         pass
 
     async def send_cache_request(self, speaker_id: str, input_text: str):
