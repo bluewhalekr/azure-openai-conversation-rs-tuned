@@ -5,6 +5,7 @@ import os
 
 from .const import DOMAIN
 from .prompts.init_prompt import INIT_PROMPT
+from .prompts.ha_automation_script import HA_AUTOMATION_SCRIPT
 from .prompts.user_pattern_prompt import USER_PATTERNS_PROMPT, USER_USAGE_PATTERN_DEMO
 
 file_path = os.path.dirname(__file__)
@@ -57,6 +58,11 @@ def get_default_init_prompt():
     return INIT_PROMPT
 
 
+def get_default_ha_automation_script():
+    """Get the default Home Assistant automation script."""
+    return HA_AUTOMATION_SCRIPT
+
+
 def get_default_user_pattern_prompt():
     """Get the default last prompt."""
     return USER_PATTERNS_PROMPT
@@ -105,6 +111,9 @@ class PromptManager:
 
     def reset_ha_automation_script(self):
         """Reset the Home Assistant automation script."""
+        default_ha_automation_script = get_default_ha_automation_script()
+        self.cache.set("ha_automation_script", default_ha_automation_script)
+
         return self.cache.get("ha_automation_script")
 
     def reset_user_pattern_prompt(self):
